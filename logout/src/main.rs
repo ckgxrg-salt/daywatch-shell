@@ -10,8 +10,7 @@ fn main() -> Result<(), iced_layershell::Error> {
         LogoutWindow::update,
         LogoutWindow::view,
     )
-    // TODO: Temporary
-    .theme(|_| iced::Theme::TokyoNight)
+    .theme(LogoutWindow::theme)
     .subscription(LogoutWindow::subscription)
     .settings(MainSettings {
         layer_settings: LayerShellSettings {

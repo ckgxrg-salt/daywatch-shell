@@ -1,11 +1,14 @@
 use iced::widget::{button, column, row, text};
-use iced::{Alignment, Element, Event, Length, Subscription, Task};
+use iced::{Alignment, Element, Event, Length, Subscription, Task, Theme};
 use iced_layershell::to_layer_message;
 use std::fmt::Display;
+
+use dwsh_utils::base16::ColourScheme;
 
 pub struct LogoutWindow {
     text: String,
     focused: LogoutAction,
+    theme: ColourScheme,
 }
 
 #[derive(PartialEq, Clone, Debug)]
@@ -47,15 +50,29 @@ impl Default for LogoutWindow {
 impl LogoutWindow {
     #[must_use]
     pub fn new() -> Self {
+        let theme = match ColourScheme::from_path(&dwsh_utils::base16::get_config()) {
+            Ok(colors) => colors,
+            Err(err) => {
+                eprintln!("failed to load valid colourscheme: {err}");
+                ColourScheme::default()
+            }
+        };
+
         Self {
             text: LogoutAction::None.to_string(),
             focused: LogoutAction::None,
+            theme,
         }
     }
 
     #[must_use]
     pub fn namespace(&self) -> String {
         String::from("dwsh-logout")
+    }
+
+    #[must_use]
+    pub fn theme(&self) -> Theme {
+        self.theme.to_iced_theme()
     }
 
     pub fn subscription(&self) -> Subscription<Message> {

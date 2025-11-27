@@ -4,7 +4,7 @@ use iced::Color;
 use iced::theme::{Palette, Theme};
 use serde::{Deserialize, Deserializer};
 use std::error::Error;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 /// Structure of a base16 colourscheme
 #[derive(Deserialize, PartialEq, Debug)]
@@ -59,12 +59,47 @@ pub struct ColourScheme {
     pub dark_red: Color,
 }
 
+impl Default for ColourScheme {
+    fn default() -> Self {
+        Self {
+            bg: Color::BLACK,
+            light_bg: Color::BLACK,
+            select_bg: Color::BLACK,
+            invisible: Color::BLACK,
+            dark_fg: Color::BLACK,
+            fg: Color::BLACK,
+            light_fg: Color::BLACK,
+            lightest_fg: Color::BLACK,
+            red: Color::BLACK,
+            orange: Color::BLACK,
+            yellow: Color::BLACK,
+            green: Color::BLACK,
+            cyan: Color::BLACK,
+            blue: Color::BLACK,
+            magenta: Color::BLACK,
+            dark_red: Color::BLACK,
+        }
+    }
+}
+
 fn deserialize_color<'de, D>(deserializer: D) -> Result<Color, D::Error>
 where
     D: Deserializer<'de>,
 {
     let buf = String::deserialize(deserializer)?;
     Color::parse(&buf).ok_or(serde::de::Error::custom("invalid colour format"))
+}
+
+/// Gets the default path to the colourscheme configuration.
+#[must_use]
+pub fn get_config() -> PathBuf {
+    if let Ok(path) = std::env::var("XDG_CONFIG_HOME") {
+        PathBuf::from(path).join("dwsh/theme.toml")
+    } else if let Some(path) = std::env::home_dir() {
+        path.join(".config/dwsh/theme.toml")
+    } else {
+        PathBuf::from("theme.toml")
+    }
 }
 
 impl ColourScheme {
@@ -96,31 +131,10 @@ impl ColourScheme {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::path::PathBuf;
 
     #[test]
     fn deserialize_color() {
         let deserialised = ColourScheme::from_path(&PathBuf::from("test/test.toml")).unwrap();
-        assert_eq!(
-            deserialised,
-            ColourScheme {
-                bg: Color::BLACK,
-                light_bg: Color::BLACK,
-                select_bg: Color::BLACK,
-                invisible: Color::BLACK,
-                dark_fg: Color::BLACK,
-                fg: Color::BLACK,
-                light_fg: Color::BLACK,
-                lightest_fg: Color::BLACK,
-                red: Color::BLACK,
-                orange: Color::BLACK,
-                yellow: Color::BLACK,
-                green: Color::BLACK,
-                cyan: Color::BLACK,
-                blue: Color::BLACK,
-                magenta: Color::BLACK,
-                dark_red: Color::BLACK,
-            }
-        );
+        assert_eq!(deserialised, ColourScheme::default());
     }
 }
