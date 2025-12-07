@@ -1,9 +1,10 @@
 # dwsh - Daywatch Shell
-A desktop shell with iced-layer-shell for my laptop
+
+A desktop shell with GTK4 for my laptop
 
 Since I'm using Hyprland now, these require Hyprland IPC to work.
 
-## Logout
+## Log out
 
 Usage:
 
@@ -20,4 +21,4 @@ This will create an overlay panel with 5 possible actions:
 - Lock screen(l)
 
 Selecting a button for the first time will highlight it, and again will confirm and execute the action.
-Press Esc or clicking anywhere else to deselect anything, and again will quit the panel.
+Press Esc or click anywhere else to deselect, and again to quit the panel.
