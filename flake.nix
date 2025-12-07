@@ -21,6 +21,8 @@
           rust-analyzer
           clippy
           rustfmt
+          eslint
+          prettier
         ];
 
         buildInputs = with pkgs; [

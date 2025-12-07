@@ -1,12 +1,12 @@
 [package]
 name = "dwsh-logout"
-version = "0.1.0"
-edition = "2024"
-
-[lints.clippy]
-pedantic = "warn"
+description = "Log out panel for dwsh"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
 
 [dependencies]
-relm4 = "0.10.0"
-gtk4-layer-shell = "0.7.1"
-gtk4 = "0.10.2"
+relm4.workspace = true
+gtk4-layer-shell.workspace = true
+gtk4.workspace = true

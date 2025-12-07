@@ -2,3 +2,20 @@
 resolver = "3"
 # members = ["main", "logout", "lock", "utils"]
 members = ["logout"]
+
+[workspace.lints.clippy]
+pedantic = "warn"
+
+[workspace.package]
+version = "0.0.1"
+authors = ["ckgxrg <ckgxrg@ckgxrg.io>"]
+edition = "2024"
+license = "BSD 2 Clause"
+description = "A desktop shell for my laptop"
+repository = "https://codeberg.org/ckgxrg/dwsh"
+
+[workspace.dependencies]
+relm4 = "0.10.0"
+gtk4-layer-shell = "0.7.1"
+gtk4 = "0.10.2"
+hyprland = { version = "0.3.13", default-features = false, features = ["dispatch", "tokio"] }

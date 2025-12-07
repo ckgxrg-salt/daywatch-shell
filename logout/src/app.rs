@@ -1,7 +1,9 @@
-use gtk::prelude::*;
-use gtk4_layer_shell::{Edge, Layer, LayerShell};
+use gtk4::gdk::Key;
+use gtk4::prelude::*;
+use gtk4_layer_shell::{Edge, KeyboardMode, Layer, LayerShell};
 use relm4::prelude::*;
 use std::fmt::Display;
+use std::process::Command;
 
 pub struct LogoutApp {
     text: String,
@@ -26,7 +28,7 @@ impl Display for LogoutAction {
             Self::Reboot => write!(f, "Reboot"),
             Self::Suspend => write!(f, "Suspend"),
             Self::Logout => write!(f, "Log out"),
-            Self::Lock => write!(f, "Lock Screen"),
+            Self::Lock => write!(f, "Lock screen"),
         }
     }
 }
@@ -50,10 +52,16 @@ impl SimpleComponent for LogoutApp {
             set_anchor: (Edge::Right, true),
             set_anchor: (Edge::Top, true),
             set_anchor: (Edge::Bottom, true),
+            set_keyboard_mode: KeyboardMode::Exclusive,
             set_title: Some("dwsh-logout"),
 
             add_controller = gtk::GestureClick {
                 connect_released[sender] => move |_, _, _, _| sender.input(Message::SelectAction(LogoutAction::None)),
+            },
+            add_controller = gtk::EventControllerKey {
+                connect_key_released[sender] => move |_, key, _, _| if let Some(action) = identify_key(key) {
+                    sender.input(Message::SelectAction(action));
+                },
             },
 
             gtk::Box {
@@ -68,18 +76,18 @@ impl SimpleComponent for LogoutApp {
 
                     gtk::Button {
                         set_tooltip_text: Some("Power Off"),
-                        set_icon_name: "system-shutdown",
-                        set_size_request: (300, 250),
+                        set_icon_name: "system-shutdown-symbolic",
+                        set_size_request: (300, 350),
                         #[watch]
-                        set_margin_top: if model.focused == LogoutAction::Poweroff {0} else {50},
+                        set_class_active: ("focused", model.focused == LogoutAction::Poweroff),
                         connect_clicked => Message::SelectAction(LogoutAction::Poweroff),
                     },
                     gtk::Button {
                         set_label: "Reboot",
-                        set_icon_name: "system-reboot",
-                        set_size_request: (300, 250),
+                        set_icon_name: "system-reboot-symbolic",
+                        set_size_request: (300, 350),
                         #[watch]
-                        set_margin_top: if model.focused == LogoutAction::Reboot {0} else {50},
+                        set_class_active: ("focused", model.focused == LogoutAction::Reboot),
                         connect_clicked => Message::SelectAction(LogoutAction::Reboot),
                     }
                 },
@@ -102,26 +110,26 @@ impl SimpleComponent for LogoutApp {
 
                     gtk::Button {
                         set_label: "Suspend",
-                        set_icon_name: "system-suspend",
-                        set_size_request: (300, 250),
+                        set_icon_name: "system-suspend-symbolic",
+                        set_size_request: (300, 350),
                         #[watch]
-                        set_margin_top: if model.focused == LogoutAction::Suspend {0} else {50},
+                        set_class_active: ("focused", model.focused == LogoutAction::Suspend),
                         connect_clicked => Message::SelectAction(LogoutAction::Suspend),
                     },
                     gtk::Button {
                         set_label: "Logout",
-                        set_icon_name: "system-log-out",
-                        set_size_request: (300, 250),
+                        set_icon_name: "system-log-out-symbolic",
+                        set_size_request: (300, 350),
                         #[watch]
-                        set_margin_top: if model.focused == LogoutAction::Logout {0} else {50},
+                        set_class_active: ("focused", model.focused == LogoutAction::Logout),
                         connect_clicked => Message::SelectAction(LogoutAction::Logout),
                     },
                     gtk::Button {
                         set_label: "Lock",
-                        set_icon_name: "system-lock-screen",
-                        set_size_request: (300, 250),
+                        set_icon_name: "system-lock-screen-symbolic",
+                        set_size_request: (300, 350),
                         #[watch]
-                        set_margin_top: if model.focused == LogoutAction::Lock {0} else {50},
+                        set_class_active: ("focused", model.focused == LogoutAction::Lock),
                         connect_clicked => Message::SelectAction(LogoutAction::Lock),
                     }
                 }
@@ -156,8 +164,45 @@ impl SimpleComponent for LogoutApp {
     }
 }
 
+fn identify_key(key: Key) -> Option<LogoutAction> {
+    match key {
+        Key::Escape => Some(LogoutAction::None),
+        Key::s => Some(LogoutAction::Poweroff),
+        Key::r => Some(LogoutAction::Reboot),
+        Key::l => Some(LogoutAction::Lock),
+        Key::e => Some(LogoutAction::Logout),
+        Key::u => Some(LogoutAction::Suspend),
+        _ => None,
+    }
+}
+
 // Executes the given logout action.
 fn execute(action: &LogoutAction) {
-    println!("{action}");
+    match *action {
+        LogoutAction::Poweroff => {
+            let _ = Command::new("hyprctl")
+                .arg("dispatch exec systemctl poweroff")
+                .spawn();
+        }
+        LogoutAction::Reboot => {
+            let _ = Command::new("hyprctl")
+                .arg("dispatch exec systemctl reboot")
+                .spawn();
+        }
+        LogoutAction::Logout => {
+            let _ = Command::new("hyprctl").arg("dispatch exit").spawn();
+        }
+        LogoutAction::Lock => {
+            let _ = Command::new("hyprctl")
+                .arg("dispatch exec hyprlock --immediate")
+                .spawn();
+        }
+        LogoutAction::Suspend => {
+            let _ = Command::new("hyprctl")
+                .arg("dispatch exec systemctl suspend")
+                .spawn();
+        }
+        LogoutAction::None => (),
+    }
     relm4::main_application().quit();
 }
