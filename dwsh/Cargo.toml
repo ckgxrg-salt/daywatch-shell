@@ -11,5 +11,6 @@ relm4.workspace = true
 gtk4-layer-shell.workspace = true
 gtk4.workspace = true
 
-battery.workspace = true
 chrono.workspace = true
+
+battery.workspace = true

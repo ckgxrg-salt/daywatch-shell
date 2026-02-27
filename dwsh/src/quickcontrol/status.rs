@@ -1,17 +1,19 @@
 //! Status area
 
 use chrono::{DateTime, Local};
+use gtk4::ApplicationInhibitFlags;
 use gtk4::prelude::*;
-use gtk4_layer_shell::{Edge, Layer, LayerShell};
 use relm4::prelude::*;
+use std::process::Command;
 
 pub struct Status {
     battery_manager: battery::Manager,
     battery: battery::Battery,
     clock: DateTime<Local>,
-    volume: f32,
-    brightness: f32,
+    volume: f64,
+    brightness: f64,
     coffee: bool,
+    inhibit_cookie: u32,
     rotation: bool,
     osk: bool,
 }
@@ -20,8 +22,8 @@ pub struct Status {
 pub enum StatusMsg {
     UpdateBattery,
     UpdateClock,
-    SetVolume(f32),
-    SetBrightness(f32),
+    SetVolume(f64),
+    SetBrightness(f64),
     SetCoffee(bool),
     SetRotation(bool),
     SetOSK(bool),
@@ -37,19 +39,50 @@ impl SimpleComponent for Status {
         gtk::Box {
             set_orientation: gtk::Orientation::Vertical,
 
+            // Upper part
             gtk::Box {
                 set_orientation: gtk::Orientation::Horizontal,
 
-                // TODO: Sliders
+                // Brightness slider
+                gtk::Scale::with_range(gtk::Orientation::Vertical, 0.0, 100.0, 10.0) {
+                    set_value: model.brightness,
+                    connect_value_changed[sender] => move |scale| {
+                        sender.input(StatusMsg::SetBrightness(scale.value()));
+                    }
+                },
+                // Volume slider
+                gtk::Scale::with_range(gtk::Orientation::Vertical, 0.0, 100.0, 10.0) {
+                    set_value: model.volume,
+                    connect_value_changed[sender] => move |scale| {
+                        sender.input(StatusMsg::SetVolume(scale.value()));
+                    }
+                },
             },
 
-            gtk::Box {
-                set_orientation: gtk::Orientation::Horizontal,
-
-                gtk::Button {
+            // Lower part
+            gtk::Grid {
+                // Inhibitor
+                attach[0, 0, 1, 1] = &gtk::Button {
                     set_tooltip_text: Some("Inhibit System Idle"),
                     set_icon_name: "coffee-symbolic",
                     connect_clicked => StatusMsg::SetCoffee(!&model.coffee),
+                },
+                // Rotation lock
+                attach[1, 0, 1, 1] = &gtk::Button {
+                    set_tooltip_text: Some("Toggle Auto Rotation"),
+                    set_icon_name: "rotate-symbolic",
+                    connect_clicked => StatusMsg::SetRotation(!&model.coffee),
+                },
+                // OSK
+                attach[0, 1, 1, 1] = &gtk::Button {
+                    set_tooltip_text: Some("Toggle On-screen Keyboard"),
+                    set_icon_name: "keyboard-symbolic",
+                    connect_clicked => StatusMsg::SetOSK(!&model.coffee),
+                },
+                // Dummy
+                attach[1, 1, 1, 1] = &gtk::Button {
+                    set_tooltip_text: Some("Dummy for now"),
+                    set_icon_name: "box-dotted",
                 },
             }
         }
@@ -67,6 +100,7 @@ impl SimpleComponent for Status {
             volume: 0.0,
             brightness: 0.0,
             coffee: false,
+            inhibit_cookie: 0,
             rotation: false,
             osk: false,
         };
@@ -82,13 +116,50 @@ impl SimpleComponent for Status {
                 }
             }
             StatusMsg::UpdateClock => self.clock = Local::now(),
-            StatusMsg::SetVolume(val) => self.volume = val,
-            StatusMsg::SetBrightness(val) => self.brightness = val,
+            StatusMsg::SetVolume(val) => {
+                self.volume = val;
+                set_volume(self.volume);
+            }
+            StatusMsg::SetBrightness(val) => {
+                self.brightness = val;
+                set_brightness(self.brightness);
+            }
             StatusMsg::SetCoffee(val) => {
                 self.coffee = val;
+                let app = relm4::main_application();
+                if self.coffee {
+                    let cookie = app.inhibit(
+                        None::<&gtk::Window>,
+                        ApplicationInhibitFlags::IDLE,
+                        Some("inhibited by user"),
+                    );
+                    self.inhibit_cookie = cookie;
+                } else {
+                    app.uninhibit(self.inhibit_cookie);
+                }
             }
             StatusMsg::SetRotation(val) => self.rotation = val,
             StatusMsg::SetOSK(val) => self.osk = val,
         }
     }
+}
+
+/// Hardcoded `wpctl` call.
+/// `volume` is a percentage from 0 to 100.
+fn set_volume(volume: f64) {
+    let volume_str = format!("{:.2}", volume / 100.0);
+    // Don't care the result
+    let _ = Command::new("wpctl")
+        .args(["set-volume", "@DEFAULT_AUDIO_SINK@", &volume_str])
+        .spawn();
+}
+
+/// Hardcoded `brightnessctl` call.
+/// `brightness` is a percentage from 0 to 100.
+fn set_brightness(brightness: f64) {
+    let brightness_str = format!("{:.0}%", brightness);
+    // Don't care the result
+    let _ = Command::new("brightnessctl")
+        .args(["set", &brightness_str])
+        .spawn();
 }

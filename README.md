@@ -1,8 +1,7 @@
 # dwsh - Daywatch Shell
 
-A desktop shell with GTK4 for my laptop
-
-Since I'm using Hyprland now, these require Hyprland IPC to work.
+A desktop shell with GTK4 for my laptop.
+This is a purely personal project, so Hyprland IPC, `wpctl` and `brightnessctl` calls are hardcoded.
 
 ## Log out
 

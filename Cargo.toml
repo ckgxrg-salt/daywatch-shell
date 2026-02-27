@@ -19,7 +19,7 @@ relm4 = "0.10.0"
 gtk4-layer-shell = "0.7.1"
 gtk4 = "0.10.2"
 
+chrono = { version = "0.4.42", features = ["alloc", "std", "clock", "now"], default-features = false }
 hyprland = { version = "0.3.13", default-features = false, features = ["dispatch", "tokio"] }
 
 battery = "0.7.8"
-chrono = { version = "0.4.42", features = ["alloc", "std", "clock", "now"], default-features = false }
