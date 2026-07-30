@@ -13,6 +13,7 @@ gtk4.workspace = true
 
 wayle-media.workspace = true
 wayle-battery.workspace = true
+wayle-sysinfo.workspace = true
 chrono.workspace = true
 
 anyhow.workspace = true

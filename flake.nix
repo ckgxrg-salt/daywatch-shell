@@ -13,7 +13,7 @@
     in
     {
       devShells.${system}.default = pkgs.mkShell {
-        name = "daywatch-shell";
+        name = "dwsh";
 
         nativeBuildInputs = with pkgs; [
           cargo
@@ -34,11 +34,6 @@
           librsvg
           dbus
         ];
-      };
-
-      packages.${system} = rec {
-        dwsh = pkgs.callPackage ./package.nix { };
-        default = dwsh;
       };
     };
 }
