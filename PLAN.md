@@ -19,7 +19,7 @@ Divided to a 3-row grid.
 
 (2, 1) contains MPD controls
 (2, 2) contains weather powered by wego
-(2, 3) contains the system tray
+(2, 3) contains the system tray using `system-tray`
 
 Add a pomodoro widget that do this:
 - 45-min cycle

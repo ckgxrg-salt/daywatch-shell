@@ -1,12 +1,13 @@
 //! Status area
 
 use chrono::{DateTime, Local};
+use std::process::Command;
+
 use gtk4::ApplicationInhibitFlags;
 use gtk4::prelude::*;
 use relm4::prelude::*;
-use std::process::Command;
 
-pub struct Status {
+pub struct StatusPanel {
     battery_manager: battery::Manager,
     battery: battery::Battery,
     clock: DateTime<Local>,
@@ -30,7 +31,7 @@ pub enum StatusMsg {
 }
 
 #[relm4::component(pub)]
-impl SimpleComponent for Status {
+impl SimpleComponent for StatusPanel {
     type Init = (battery::Manager, battery::Battery);
     type Input = StatusMsg;
     type Output = ();
@@ -93,7 +94,7 @@ impl SimpleComponent for Status {
         root: Self::Root,
         sender: ComponentSender<Self>,
     ) -> ComponentParts<Self> {
-        let model = Status {
+        let model = StatusPanel {
             battery_manager: init.0,
             battery: init.1,
             clock: Local::now(),

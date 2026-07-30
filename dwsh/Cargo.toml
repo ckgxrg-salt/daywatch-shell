@@ -11,6 +11,10 @@ relm4.workspace = true
 gtk4-layer-shell.workspace = true
 gtk4.workspace = true
 
+wayle-media.workspace = true
+wayle-battery.workspace = true
 chrono.workspace = true
 
-battery.workspace = true
+anyhow.workspace = true
+tokio.workspace = true
+futures.workspace = true
