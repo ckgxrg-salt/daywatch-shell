@@ -11,6 +11,7 @@ relm4.workspace = true
 gtk4-layer-shell.workspace = true
 gtk4.workspace = true
 
+wayle-core.workspace = true
 wayle-media.workspace = true
 wayle-battery.workspace = true
 wayle-sysinfo.workspace = true

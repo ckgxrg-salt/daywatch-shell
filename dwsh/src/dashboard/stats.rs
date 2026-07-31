@@ -4,25 +4,27 @@ use futures::stream::StreamExt;
 use gtk4::prelude::*;
 use relm4::prelude::*;
 
+use wayle_core::watch_all;
+
 use crate::services::{battery_service, sysinfo_service};
 
-pub struct InfoBars {
+pub struct Stats {
     battery: f64,
     cpu: f64,
     mem: f64,
 }
 
 #[derive(Debug)]
-pub enum InfoBarsMsg {
+pub enum StatsMsg {
     BatteryUpdated(f64),
-    CpuUpdated(f64),
+    CpuMemUpdated(f64, f64),
 }
 
 #[relm4::component(pub)]
-impl Component for InfoBars {
+impl Component for Stats {
     type Init = ();
-    type Input = InfoBarsMsg;
-    type CommandOutput = InfoBarsMsg;
+    type Input = StatsMsg;
+    type CommandOutput = StatsMsg;
     type Output = ();
 
     view! {
@@ -48,6 +50,16 @@ impl Component for InfoBars {
                     #[watch]
                     set_fraction: model.cpu
                 },
+            },
+
+            gtk::Box {
+                gtk::Image {
+                    set_icon_name: Some("drive-virtual-symbolic"),
+                },
+                gtk::ProgressBar {
+                    #[watch]
+                    set_fraction: model.mem
+                },
             }
         }
     }
@@ -59,7 +71,7 @@ impl Component for InfoBars {
     ) -> ComponentParts<Self> {
         watch_battery(&sender);
         watch_sysinfo(&sender);
-        let model = InfoBars {
+        let model = Stats {
             battery: 0.0,
             cpu: 0.0,
             mem: 0.0,
@@ -75,13 +87,16 @@ impl Component for InfoBars {
         root: &Self::Root,
     ) {
         match message {
-            InfoBarsMsg::BatteryUpdated(percentage) => self.battery = percentage,
-            InfoBarsMsg::CpuUpdated(percentage) => self.cpu = percentage,
+            StatsMsg::BatteryUpdated(percentage) => self.battery = percentage,
+            StatsMsg::CpuMemUpdated(cpu, mem) => {
+                self.cpu = cpu;
+                self.mem = mem;
+            }
         }
     }
 }
 
-fn watch_battery(sender: &ComponentSender<InfoBars>) {
+fn watch_battery(sender: &ComponentSender<Stats>) {
     let service = battery_service();
     let percentage = service.device.percentage.clone();
     let mut stream = percentage.watch();
@@ -93,25 +108,25 @@ fn watch_battery(sender: &ComponentSender<InfoBars>) {
             _ = shutdown.wait() => {},
             _ = async {
                 while let Some(value) = stream.next().await {
-                    let _ = out.send(InfoBarsMsg::BatteryUpdated(value / 100.0));
+                    let _ = out.send(StatsMsg::BatteryUpdated(value / 100.0));
                 }
             } => {}
         }
     })
 }
 
-fn watch_sysinfo(sender: &ComponentSender<InfoBars>) {
+fn watch_sysinfo(sender: &ComponentSender<Stats>) {
     let service = sysinfo_service();
-    let mut stream = service.cpu.watch();
-    // let state = service.device.state.clone();
-    // let is_present = service.device.is_present.clone();
+    let mut stream = watch_all!(service, cpu, memory);
 
     sender.command(|out, shutdown| async move {
         tokio::select! {
             _ = shutdown.wait() => {},
             _ = async {
                 while let Some(value) = stream.next().await {
-                    let _ = out.send(InfoBarsMsg::CpuUpdated((value.usage_percent / 100.0).into()));
+                    let cpu_val = (value.cpu.get().usage_percent / 100.0) as f64;
+                    let mem_val = (value.memory.get().usage_percent / 100.0) as f64;
+                    let _ = out.send(StatsMsg::CpuMemUpdated(cpu_val, mem_val));
                 }
             } => {}
         }

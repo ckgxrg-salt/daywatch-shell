@@ -1,6 +1,6 @@
 //! Dashboard
 
-mod info_bars;
+mod stats;
 
 use std::process::Command;
 
@@ -8,10 +8,10 @@ use gtk4::prelude::*;
 use gtk4_layer_shell::{Edge, Layer, LayerShell};
 use relm4::prelude::*;
 
-use info_bars::InfoBars;
+use stats::Stats;
 
 pub struct Dashboard {
-    info_bars: Controller<InfoBars>,
+    info_bars: Controller<Stats>,
     fortune: String,
     time: String,
 }
@@ -38,7 +38,7 @@ impl SimpleComponent for Dashboard {
             set_anchor: (Edge::Right, true),
 
             gtk::Box {
-                set_orientation: gtk::Orientation::Horizontal,
+                set_orientation: gtk::Orientation::Vertical,
                 append = model.info_bars.widget(),
 
                 gtk::Label {
@@ -62,7 +62,7 @@ impl SimpleComponent for Dashboard {
         root: Self::Root,
         sender: ComponentSender<Self>,
     ) -> ComponentParts<Self> {
-        let info_bars = InfoBars::builder().launch(()).detach();
+        let info_bars = Stats::builder().launch(()).detach();
         let model = Dashboard {
             fortune: get_fortune(),
             info_bars,

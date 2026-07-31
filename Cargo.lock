@@ -306,6 +306,7 @@ dependencies = [
  "relm4",
  "tokio",
  "wayle-battery",
+ "wayle-core",
  "wayle-media",
  "wayle-sysinfo",
 ]
