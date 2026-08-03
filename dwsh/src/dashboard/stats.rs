@@ -65,7 +65,7 @@ impl Component for Stats {
     }
 
     fn init(
-        init: Self::Init,
+        _init: Self::Init,
         root: Self::Root,
         sender: ComponentSender<Self>,
     ) -> ComponentParts<Self> {
@@ -83,8 +83,8 @@ impl Component for Stats {
     fn update_cmd(
         &mut self,
         message: Self::Input,
-        sender: ComponentSender<Self>,
-        root: &Self::Root,
+        _sender: ComponentSender<Self>,
+        _root: &Self::Root,
     ) {
         match message {
             StatsMsg::BatteryUpdated(percentage) => self.battery = percentage,
@@ -103,32 +103,30 @@ fn watch_battery(sender: &ComponentSender<Stats>) {
     // let state = service.device.state.clone();
     // let is_present = service.device.is_present.clone();
 
-    sender.command(|out, shutdown| async move {
-        tokio::select! {
-            _ = shutdown.wait() => {},
-            _ = async {
+    sender.command(|out, shutdown| {
+        shutdown
+            .register(async move {
                 while let Some(value) = stream.next().await {
                     let _ = out.send(StatsMsg::BatteryUpdated(value / 100.0));
                 }
-            } => {}
-        }
-    })
+            })
+            .drop_on_shutdown()
+    });
 }
 
 fn watch_sysinfo(sender: &ComponentSender<Stats>) {
     let service = sysinfo_service();
     let mut stream = watch_all!(service, cpu, memory);
 
-    sender.command(|out, shutdown| async move {
-        tokio::select! {
-            _ = shutdown.wait() => {},
-            _ = async {
+    sender.command(|out, shutdown| {
+        shutdown
+            .register(async move {
                 while let Some(value) = stream.next().await {
                     let cpu_val = (value.cpu.get().usage_percent / 100.0) as f64;
                     let mem_val = (value.memory.get().usage_percent / 100.0) as f64;
                     let _ = out.send(StatsMsg::CpuMemUpdated(cpu_val, mem_val));
                 }
-            } => {}
-        }
-    })
+            })
+            .drop_on_shutdown()
+    });
 }
