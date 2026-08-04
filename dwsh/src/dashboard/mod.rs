@@ -1,26 +1,22 @@
 //! Dashboard
 
+mod quote;
 mod stats;
 
-use std::process::Command;
-
 use gtk4::prelude::*;
-use gtk4_layer_shell::{Edge, Layer, LayerShell};
+use gtk4_layer_shell::{Layer, LayerShell};
 use relm4::prelude::*;
 
+use quote::Quote;
 use stats::Stats;
 
 pub struct Dashboard {
+    quote: Controller<Quote>,
     info_bars: Controller<Stats>,
-    fortune: String,
-    time: String,
 }
 
 #[derive(Debug)]
-pub enum DashboardMsg {
-    RefreshFortune,
-    UpdateStatus,
-}
+pub enum DashboardMsg {}
 
 #[relm4::component(pub)]
 impl SimpleComponent for Dashboard {
@@ -33,26 +29,11 @@ impl SimpleComponent for Dashboard {
             init_layer_shell: (),
             set_layer: Layer::Bottom,
             set_title: Some("dwsh-dashboard"),
-            set_anchor: (Edge::Top, true),
-            set_anchor: (Edge::Bottom, true),
-            set_anchor: (Edge::Right, true),
 
             gtk::Box {
                 set_orientation: gtk::Orientation::Vertical,
                 append = model.info_bars.widget(),
-
-                gtk::Label {
-                    set_wrap: true,
-                    #[watch]
-                    set_label: &model.fortune,
-                    #[watch]
-                    set_tooltip_text: Some(&model.fortune),
-                },
-                gtk::Button {
-                    set_tooltip_text: Some("Refresh Quote"),
-                    set_icon_name: "dialog-information-symbolic",
-                    connect_clicked => DashboardMsg::RefreshFortune,
-                }
+                append = model.quote.widget(),
             }
         }
     }
@@ -60,33 +41,17 @@ impl SimpleComponent for Dashboard {
     fn init(
         _init: Self::Init,
         root: Self::Root,
-        sender: ComponentSender<Self>,
+        _sender: ComponentSender<Self>,
     ) -> ComponentParts<Self> {
+        let quote = Quote::builder().launch(()).detach();
         let info_bars = Stats::builder().launch(()).detach();
-        let model = Dashboard {
-            fortune: get_fortune(),
-            info_bars,
-            time: String::new(),
-        };
+
+        let model = Dashboard { quote, info_bars };
         let widgets = view_output!();
         ComponentParts { model, widgets }
     }
 
     fn update(&mut self, message: Self::Input, _sender: ComponentSender<Self>) {
-        match message {
-            DashboardMsg::RefreshFortune => {
-                self.fortune = get_fortune();
-            }
-            DashboardMsg::UpdateStatus => todo!(),
-        }
+        match message {}
     }
-}
-
-fn get_fortune() -> String {
-    Command::new("fortune")
-        .output()
-        .map(|o| {
-            String::from_utf8(o.stdout).unwrap_or(String::from("Error parsing quote from fortune"))
-        })
-        .unwrap_or(String::from("Error fetching quote from fortune"))
 }
