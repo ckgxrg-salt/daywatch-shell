@@ -1,5 +1,6 @@
 //! Dashboard
 
+mod calendar;
 mod quote;
 mod stats;
 
@@ -7,12 +8,14 @@ use gtk4::prelude::*;
 use gtk4_layer_shell::{Layer, LayerShell};
 use relm4::prelude::*;
 
+use calendar::Calendar;
 use quote::Quote;
 use stats::Stats;
 
 pub struct Dashboard {
     quote: Controller<Quote>,
     info_bars: Controller<Stats>,
+    calendar: Controller<Calendar>,
 }
 
 #[derive(Debug)]
@@ -34,6 +37,7 @@ impl SimpleComponent for Dashboard {
                 set_orientation: gtk::Orientation::Vertical,
                 append = model.info_bars.widget(),
                 append = model.quote.widget(),
+                append = model.calendar.widget(),
             }
         }
     }
@@ -45,8 +49,13 @@ impl SimpleComponent for Dashboard {
     ) -> ComponentParts<Self> {
         let quote = Quote::builder().launch(()).detach();
         let info_bars = Stats::builder().launch(()).detach();
+        let calendar = Calendar::builder().launch(()).detach();
 
-        let model = Dashboard { quote, info_bars };
+        let model = Dashboard {
+            quote,
+            info_bars,
+            calendar,
+        };
         let widgets = view_output!();
         ComponentParts { model, widgets }
     }
