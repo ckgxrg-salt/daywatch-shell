@@ -2,7 +2,9 @@
 
 use gtk4::prelude::*;
 use relm4::prelude::*;
-use std::{collections::VecDeque, process::Command};
+
+use std::collections::VecDeque;
+use tokio::process::Command;
 
 // TODO: Write a config manager
 const QUOTE_MAX_WIDTH: usize = 75;
@@ -17,8 +19,8 @@ pub enum QuoteMsg {
     RefreshQuote,
 }
 
-#[relm4::component(pub)]
-impl SimpleComponent for Quote {
+#[relm4::component(async, pub)]
+impl SimpleAsyncComponent for Quote {
     type Init = ();
     type Input = QuoteMsg;
     type Output = ();
@@ -41,29 +43,29 @@ impl SimpleComponent for Quote {
         }
     }
 
-    fn init(
+    async fn init(
         _init: Self::Init,
         _root: Self::Root,
-        _sender: relm4::prelude::ComponentSender<Self>,
-    ) -> relm4::prelude::ComponentParts<Self> {
+        _sender: AsyncComponentSender<Self>,
+    ) -> AsyncComponentParts<Self> {
         let model = Self {
-            text: get_fortune(),
+            text: get_fortune().await,
         };
         let widgets = view_output!();
-        ComponentParts { model, widgets }
+        AsyncComponentParts { model, widgets }
     }
 
-    fn update(&mut self, message: Self::Input, _sender: ComponentSender<Self>) {
+    async fn update(&mut self, message: Self::Input, _sender: AsyncComponentSender<Self>) {
         match message {
-            QuoteMsg::RefreshQuote => self.text = get_fortune(),
+            QuoteMsg::RefreshQuote => self.text = get_fortune().await,
         }
     }
 }
 
-// TODO: Consider make this async?
-fn get_fortune() -> String {
+async fn get_fortune() -> String {
     Command::new("fortune")
         .output()
+        .await
         .map(|o| {
             String::from_utf8(o.stdout).unwrap_or(String::from("Error parsing quote from fortune"))
         })

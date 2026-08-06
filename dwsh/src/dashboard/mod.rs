@@ -15,7 +15,7 @@ use stats::Stats;
 use switches::Switches;
 
 pub struct Dashboard {
-    quote: Controller<Quote>,
+    quote: AsyncController<Quote>,
     info_bars: Controller<Stats>,
     calendar: Controller<Calendar>,
     switches: AsyncController<Switches>,
