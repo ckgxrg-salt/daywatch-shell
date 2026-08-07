@@ -15,7 +15,8 @@ wayle-core.workspace = true
 wayle-media.workspace = true
 wayle-battery.workspace = true
 wayle-sysinfo.workspace = true
-time.workspace = true
+wayle-systray.workspace = true
+chrono.workspace = true
 
 anyhow.workspace = true
 tokio.workspace = true
