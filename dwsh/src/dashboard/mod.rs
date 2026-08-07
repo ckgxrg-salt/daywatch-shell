@@ -14,12 +14,14 @@ use calendar::Calendar;
 use quote::Quote;
 use stats::Stats;
 use switches::Switches;
+use systray::Systray;
 
 pub struct Dashboard {
     quote: AsyncController<Quote>,
     info_bars: Controller<Stats>,
     calendar: Controller<Calendar>,
     switches: AsyncController<Switches>,
+    systray: Controller<Systray>,
 }
 
 #[derive(Debug)]
@@ -43,6 +45,7 @@ impl SimpleComponent for Dashboard {
                 append = model.quote.widget(),
                 append = model.calendar.widget(),
                 append = model.switches.widget(),
+                append = model.systray.widget(),
             }
         }
     }
@@ -56,12 +59,14 @@ impl SimpleComponent for Dashboard {
         let info_bars = Stats::builder().launch(()).detach();
         let calendar = Calendar::builder().launch(()).detach();
         let switches = Switches::builder().launch(()).detach();
+        let systray = Systray::builder().launch(()).detach();
 
         let model = Dashboard {
             quote,
             info_bars,
             calendar,
             switches,
+            systray,
         };
         let widgets = view_output!();
         ComponentParts { model, widgets }

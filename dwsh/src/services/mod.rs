@@ -2,6 +2,7 @@ use std::sync::{Arc, OnceLock};
 
 use wayle_battery::BatteryService;
 use wayle_sysinfo::SysinfoService;
+use wayle_systray::SystemTrayService;
 
 static BATTERY_SERVICE: OnceLock<Arc<BatteryService>> = OnceLock::new();
 pub fn battery_service() -> Arc<BatteryService> {
@@ -19,6 +20,14 @@ pub fn sysinfo_service() -> Arc<SysinfoService> {
         .clone()
 }
 
+static TRAY_SERVICE: OnceLock<Arc<SystemTrayService>> = OnceLock::new();
+pub fn tray_service() -> Arc<SystemTrayService> {
+    TRAY_SERVICE
+        .get()
+        .expect("BatteryService not initialised")
+        .clone()
+}
+
 pub async fn init_services() -> anyhow::Result<()> {
     BATTERY_SERVICE
         .set(Arc::new(BatteryService::new().await?))
@@ -26,6 +35,7 @@ pub async fn init_services() -> anyhow::Result<()> {
     SYSINFO_SERVICE
         .set(Arc::new(SysinfoService::builder().build()))
         .ok();
+    TRAY_SERVICE.set(SystemTrayService::new().await?).ok();
 
     Ok(())
 }
