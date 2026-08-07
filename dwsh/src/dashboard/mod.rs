@@ -4,6 +4,7 @@ mod calendar;
 mod quote;
 mod stats;
 mod switches;
+mod systray;
 
 use gtk4::prelude::*;
 use gtk4_layer_shell::{Layer, LayerShell};

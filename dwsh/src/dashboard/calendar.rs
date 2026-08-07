@@ -12,16 +12,16 @@ pub struct Calendar {
 }
 
 #[derive(Debug)]
-pub enum CalendarMsg {
+pub enum CalendarCmd {
     UpdateTime(OffsetDateTime),
 }
 
 #[relm4::component(pub)]
 impl Component for Calendar {
     type Init = ();
-    type Input = CalendarMsg;
+    type Input = ();
     type Output = ();
-    type CommandOutput = CalendarMsg;
+    type CommandOutput = CalendarCmd;
 
     view! {
         gtk::Box {
@@ -68,7 +68,7 @@ impl Component for Calendar {
         _root: &Self::Root,
     ) {
         match message {
-            CalendarMsg::UpdateTime(now) => self.time = now,
+            CalendarCmd::UpdateTime(now) => self.time = now,
         }
     }
 }
@@ -80,7 +80,7 @@ fn watch_time(sender: &ComponentSender<Calendar>) {
                 loop {
                     tokio::time::sleep(Duration::from_secs(1)).await;
                     let now = OffsetDateTime::now_local().unwrap_or(OffsetDateTime::now_utc());
-                    let _ = out.send(CalendarMsg::UpdateTime(now));
+                    let _ = out.send(CalendarCmd::UpdateTime(now));
                 }
             })
             .drop_on_shutdown()

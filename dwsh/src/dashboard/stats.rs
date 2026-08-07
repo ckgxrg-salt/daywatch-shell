@@ -15,7 +15,7 @@ pub struct Stats {
 }
 
 #[derive(Debug)]
-pub enum StatsMsg {
+pub enum StatsCmd {
     UpdateBattery(f64),
     UpdateCpuMem(f64, f64),
 }
@@ -23,8 +23,8 @@ pub enum StatsMsg {
 #[relm4::component(pub)]
 impl Component for Stats {
     type Init = ();
-    type Input = StatsMsg;
-    type CommandOutput = StatsMsg;
+    type Input = ();
+    type CommandOutput = StatsCmd;
     type Output = ();
 
     view! {
@@ -81,13 +81,13 @@ impl Component for Stats {
 
     fn update_cmd(
         &mut self,
-        message: Self::Input,
+        message: Self::CommandOutput,
         _sender: ComponentSender<Self>,
         _root: &Self::Root,
     ) {
         match message {
-            StatsMsg::UpdateBattery(percentage) => self.battery = percentage,
-            StatsMsg::UpdateCpuMem(cpu, mem) => {
+            StatsCmd::UpdateBattery(percentage) => self.battery = percentage,
+            StatsCmd::UpdateCpuMem(cpu, mem) => {
                 self.cpu = cpu;
                 self.mem = mem;
             }
@@ -106,7 +106,7 @@ fn watch_battery(sender: &ComponentSender<Stats>) {
         shutdown
             .register(async move {
                 while let Some(value) = stream.next().await {
-                    let _ = out.send(StatsMsg::UpdateBattery(value / 100.0));
+                    let _ = out.send(StatsCmd::UpdateBattery(value / 100.0));
                 }
             })
             .drop_on_shutdown()
@@ -123,7 +123,7 @@ fn watch_sysinfo(sender: &ComponentSender<Stats>) {
                 while let Some(value) = stream.next().await {
                     let cpu_val = (value.cpu.get().usage_percent / 100.0) as f64;
                     let mem_val = (value.memory.get().usage_percent / 100.0) as f64;
-                    let _ = out.send(StatsMsg::UpdateCpuMem(cpu_val, mem_val));
+                    let _ = out.send(StatsCmd::UpdateCpuMem(cpu_val, mem_val));
                 }
             })
             .drop_on_shutdown()
