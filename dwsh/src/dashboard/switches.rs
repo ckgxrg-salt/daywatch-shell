@@ -41,11 +41,10 @@ impl SimpleAsyncComponent for Switches {
             },
             attach[0, 1, 1, 1] = &gtk::Button {
                 #[watch]
-                set_tooltip_text: if model.mpd { Some("CAVA is running") } else { Some("CAVA is not running") },
+                set_tooltip_text: if model.cava { Some("CAVA is running") } else { Some("CAVA is not running") },
                 set_icon_name: "histogram-symbolic",
                 connect_clicked => SwitchesMsg::Cava,
             },
-            attach[1, 1, 1, 1] = &gtk::Box,
         },
     }
 
@@ -124,7 +123,7 @@ impl SimpleAsyncComponent for Switches {
     }
 }
 
-/// Ugly wrapper for `systemctl`
+/// Ugly wrapper for `systemctl is-active`
 async fn get_state(service: &str) -> bool {
     Command::new("systemctl")
         .args(["--user", "is-active", service])

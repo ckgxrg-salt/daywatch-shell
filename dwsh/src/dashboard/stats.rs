@@ -1,9 +1,9 @@
 //! Display battery level, cpu and memory usage.
 
-use futures::stream::StreamExt;
 use gtk4::prelude::*;
 use relm4::prelude::*;
 
+use futures::stream::StreamExt;
 use wayle_core::watch_all;
 
 use crate::services::{battery_service, sysinfo_service};
@@ -28,7 +28,6 @@ impl Component for Stats {
     type Output = ();
 
     view! {
-        #[root]
         gtk::Box {
             set_orientation: gtk::Orientation::Vertical,
 
