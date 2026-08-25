@@ -16,6 +16,7 @@ pub struct SystrayItem {
     item: Arc<TrayItem>,
     icon_name: Option<String>,
     menu_root: Option<MenuItem>,
+    button: Option<gtk::Button>,
     popover: Option<gtk::PopoverMenu>,
 }
 
@@ -54,6 +55,7 @@ impl FactoryComponent for SystrayItem {
             item: init,
             icon_name: None,
             menu_root: None,
+            button: None,
             popover: None,
         }
     }
@@ -74,6 +76,8 @@ impl FactoryComponent for SystrayItem {
             }
         });
         root.add_controller(right_click);
+
+        self.button = Some(root.clone());
 
         self.watch_icon(&sender);
         self.watch_menu(&sender);
@@ -104,7 +108,7 @@ impl FactoryComponent for SystrayItem {
 }
 
 impl SystrayItem {
-    fn toggle_menu(&mut self, sender: &FactorySender<SystrayItem>) {
+    fn toggle_menu(&mut self, _sender: &FactorySender<SystrayItem>) {
         if let Some(popover) = self.popover.as_ref()
             && popover.is_visible()
         {
@@ -112,9 +116,14 @@ impl SystrayItem {
             return;
         }
 
-        let model = Adapter::build_popover(&self.item);
-        model.popup();
-        self.popover = Some(model);
+        let popover = Adapter::build_popover(&self.item);
+
+        if let Some(button) = self.button.as_ref() {
+            popover.set_parent(button);
+        }
+        self.popover = Some(popover.clone());
+
+        popover.popup();
     }
 
     fn watch_icon(&self, sender: &FactorySender<SystrayItem>) {
