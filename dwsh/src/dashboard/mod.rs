@@ -39,13 +39,12 @@ impl SimpleComponent for Dashboard {
             set_layer: Layer::Bottom,
             set_title: Some("dwsh-dashboard"),
 
-            gtk::Box {
-                set_orientation: gtk::Orientation::Vertical,
-                append = model.info_bars.widget(),
-                append = model.quote.widget(),
-                append = model.calendar.widget(),
-                append = model.switches.widget(),
-                append = model.systray.widget(),
+            gtk::Grid {
+                attach[0, 0, 4, 6] = model.info_bars.widget(),
+                attach[4, 0, 6, 6] = model.calendar.widget(),
+                attach[10, 0, 4, 6] = model.switches.widget(),
+                attach[0, 6, 10, 4] = model.quote.widget(),
+                attach[7, 10, 7, 6] = model.systray.widget(),
             }
         }
     }
