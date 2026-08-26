@@ -3,18 +3,21 @@ label {
 }
 
 button {
-  background-color: @button_bg;
-  border: solid @unfocused_borders 10px;
+  border: solid @borders 10px;
   border-radius: 2px;
-  -gtk-icon-size: 64px;
-  margin: 40px 0px 40px 0px;
-  transition-duration: 0.3s;
 }
 
 button.focused {
-  min-width: 300px;
-  background-color: @accent_bg_color;
-  border: solid @borders 10px;
+  color: @accent_bg_color;
+}
+
+button image {
+  transition-duration: 0.3s;
+  margin: 100px 100px 100px 100px;
+  -gtk-icon-size: 64px;
+}
+
+button.focused image {
+  margin: 120px 120px 120px 120px;
   -gtk-icon-size: 96px;
-  margin-top: 0px;
 }

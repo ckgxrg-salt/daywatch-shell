@@ -321,6 +321,7 @@ version = "0.0.1"
 dependencies = [
  "gtk4",
  "gtk4-layer-shell",
+ "niri-ipc",
  "relm4",
 ]
 
@@ -1295,6 +1296,16 @@ dependencies = [
  "libc",
  "wasi",
  "windows-sys 0.61.2",
+]
+
+[[package]]
+name = "niri-ipc"
+version = "26.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6a4adbddf4037ce047854d36a60b5bf80a7990b8db2f0a0b9ede7534b0bae09a"
+dependencies = [
+ "serde",
+ "serde_json",
 ]
 
 [[package]]

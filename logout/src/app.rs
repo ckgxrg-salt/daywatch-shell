@@ -1,11 +1,11 @@
-use gtk4::gdk::Key;
-use gtk4::prelude::*;
+use gtk4::{gdk::Key, prelude::*};
 use gtk4_layer_shell::{Edge, KeyboardMode, Layer, LayerShell};
+#[cfg(not(debug_assertions))]
+use niri_ipc::{Action, Request};
 use relm4::prelude::*;
 use std::fmt::Display;
-use std::process::Command;
 
-pub struct DwshLogout {
+pub struct Logout {
     text: String,
     focused: LogoutAction,
 }
@@ -39,7 +39,7 @@ pub enum Message {
 }
 
 #[relm4::component(pub)]
-impl SimpleComponent for DwshLogout {
+impl SimpleComponent for Logout {
     type Init = ();
     type Input = Message;
     type Output = ();
@@ -71,21 +71,18 @@ impl SimpleComponent for DwshLogout {
 
                 gtk::Box {
                     set_align: gtk::Align::Center,
-                    set_height_request: 300,
                     set_spacing: 50,
 
                     gtk::Button {
                         set_tooltip_text: Some("Power Off"),
                         set_icon_name: "system-shutdown-symbolic",
-                        set_size_request: (300, 350),
                         #[watch]
                         set_class_active: ("focused", model.focused == LogoutAction::Poweroff),
                         connect_clicked => Message::SelectAction(LogoutAction::Poweroff),
                     },
                     gtk::Button {
-                        set_label: "Reboot",
+                        set_tooltip_text: Some("Reboot"),
                         set_icon_name: "system-reboot-symbolic",
-                        set_size_request: (300, 350),
                         #[watch]
                         set_class_active: ("focused", model.focused == LogoutAction::Reboot),
                         connect_clicked => Message::SelectAction(LogoutAction::Reboot),
@@ -105,29 +102,25 @@ impl SimpleComponent for DwshLogout {
 
                 gtk::Box {
                     set_align: gtk::Align::Center,
-                    set_height_request: 300,
                     set_spacing: 30,
 
                     gtk::Button {
-                        set_label: "Suspend",
+                        set_tooltip_text: Some("Suspend"),
                         set_icon_name: "system-suspend-symbolic",
-                        set_size_request: (300, 350),
                         #[watch]
                         set_class_active: ("focused", model.focused == LogoutAction::Suspend),
                         connect_clicked => Message::SelectAction(LogoutAction::Suspend),
                     },
                     gtk::Button {
-                        set_label: "Logout",
+                        set_tooltip_text: Some("Log out"),
                         set_icon_name: "system-log-out-symbolic",
-                        set_size_request: (300, 350),
                         #[watch]
                         set_class_active: ("focused", model.focused == LogoutAction::Logout),
                         connect_clicked => Message::SelectAction(LogoutAction::Logout),
                     },
                     gtk::Button {
-                        set_label: "Lock",
+                        set_tooltip_text: Some("Lock Screen"),
                         set_icon_name: "system-lock-screen-symbolic",
-                        set_size_request: (300, 350),
                         #[watch]
                         set_class_active: ("focused", model.focused == LogoutAction::Lock),
                         connect_clicked => Message::SelectAction(LogoutAction::Lock),
@@ -142,7 +135,7 @@ impl SimpleComponent for DwshLogout {
         root: Self::Root,
         sender: ComponentSender<Self>,
     ) -> ComponentParts<Self> {
-        let model = DwshLogout {
+        let model = Logout {
             text: LogoutAction::None.to_string(),
             focused: LogoutAction::None,
         };
@@ -154,7 +147,13 @@ impl SimpleComponent for DwshLogout {
         match message {
             Message::SelectAction(action) => {
                 if self.focused == action {
+                    #[cfg(not(debug_assertions))]
                     execute(&action);
+
+                    #[cfg(debug_assertions)]
+                    println!("{action}");
+
+                    relm4::main_application().quit();
                 } else {
                     self.text = action.to_string();
                     self.focused = action;
@@ -176,6 +175,7 @@ fn identify_key(key: Key) -> Option<LogoutAction> {
     }
 }
 
+#[cfg(not(debug_assertions))]
 // Executes the given logout action.
 fn execute(action: &LogoutAction) {
     let Ok(mut socket) = niri_ipc::socket::Socket::connect() else {
