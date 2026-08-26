@@ -1,9 +1,6 @@
 //! XDG icons locator
 
-use iced::{
-    Element,
-    widget::{Image, Svg, image, svg},
-};
+use iced::widget::{image, svg};
 use std::path::PathBuf;
 
 pub enum XdgIcon {
@@ -28,15 +25,6 @@ impl From<PathBuf> for XdgIcon {
     }
 }
 
-impl<'a, Message> From<XdgIcon> for Element<'a, Message> {
-    fn from(val: XdgIcon) -> Self {
-        match val {
-            XdgIcon::Image(handle) => Image::new(handle).into(),
-            XdgIcon::Svg(handle) => Svg::new(handle).into(),
-        }
-    }
-}
-
 pub struct IconManager {
     theme: String,
 }
@@ -51,6 +39,7 @@ impl IconManager {
     pub fn lookup(&self, name: &str) -> Option<XdgIcon> {
         freedesktop_icons::lookup(name)
             .with_theme(&self.theme)
+            .with_size(0)
             .with_cache()
             .find()
             .map(|p| p.into())

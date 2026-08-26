@@ -1,16 +1,17 @@
 use iced::{
-    Element, Event, Subscription, Task, event,
+    ContentFit, Element, Event, Length, Subscription, Task, alignment, event,
     keyboard::{self, Key, key::Named},
     mouse,
-    widget::{button, column, row, text},
+    widget::{button, column, container, image, row, svg, text, tooltip},
     window,
 };
 use iced_exwlshell::to_exwlshell_message;
+#[cfg(not(debug_assertions))]
 use niri_ipc::{Action, Request};
 use std::fmt::Display;
 
-use crate::app::Message::SelectAction;
 use crate::icon::IconManager;
+use crate::{app::Message::SelectAction, icon::XdgIcon};
 
 pub struct Logout {
     icon_manager: IconManager,
@@ -66,7 +67,10 @@ impl Logout {
         match message {
             Message::SelectAction(action) => {
                 if self.focused == action {
+                    #[cfg(not(debug_assertions))]
                     execute(&action);
+                    #[cfg(debug_assertions)]
+                    println!("{action}");
                     return iced::exit();
                 } else {
                     self.text = action.to_string();
@@ -90,28 +94,69 @@ impl Logout {
     }
 
     pub fn view(&self, _id: window::Id) -> Element<'_, Message> {
-        column![
-            row![
-                button(self.find_icon("system-shutdown-symbolic"))
-                    .on_press(Message::SelectAction(LogoutAction::Poweroff)),
-                button(self.find_icon("system-reboot-symbolic"))
-                    .on_press(Message::SelectAction(LogoutAction::Reboot)),
-            ],
-            text(&self.text),
-            row![
-                button(self.find_icon("system-suspend-symbolic"))
-                    .on_press(Message::SelectAction(LogoutAction::Suspend)),
-                button(self.find_icon("system-log-out-symbolic"))
-                    .on_press(Message::SelectAction(LogoutAction::Logout)),
-                button(self.find_icon("system-lock-screen-symbolic"))
-                    .on_press(Message::SelectAction(LogoutAction::Lock)),
-            ],
-        ]
-        .into()
+        std::convert::Into::<Element<'_, Message>>::into(
+            column![
+                row![
+                    tooltip(
+                        button(self.find_icon("system-shutdown-symbolic", 12.0))
+                            .width(300)
+                            .height(300)
+                            .on_press(Message::SelectAction(LogoutAction::Poweroff)),
+                        "Shutdown",
+                        tooltip::Position::Right,
+                    ),
+                    tooltip(
+                        button(self.find_icon("system-reboot-symbolic", 12.0))
+                            .width(300)
+                            .height(300)
+                            .on_press(Message::SelectAction(LogoutAction::Reboot)),
+                        "Reboot",
+                        tooltip::Position::Right,
+                    ),
+                ],
+                text(&self.text).align_x(alignment::Horizontal::Center),
+                row![
+                    tooltip(
+                        button(self.find_icon("system-suspend-symbolic", 12.0))
+                            .width(300)
+                            .height(300)
+                            .on_press(Message::SelectAction(LogoutAction::Suspend)),
+                        "Suspend",
+                        tooltip::Position::Right,
+                    ),
+                    tooltip(
+                        button(self.find_icon("system-log-out-symbolic", 12.0))
+                            .width(300)
+                            .height(300)
+                            .on_press(Message::SelectAction(LogoutAction::Logout)),
+                        "Logout",
+                        tooltip::Position::Right,
+                    ),
+                    tooltip(
+                        button(self.find_icon("system-lock-screen-symbolic", 96.0))
+                            .width(300)
+                            .height(300)
+                            .on_press(Message::SelectAction(LogoutAction::Lock)),
+                        "Lock Screen",
+                        tooltip::Position::Right,
+                    ),
+                ]
+            ]
+            .spacing(50)
+            .align_x(alignment::Horizontal::Center),
+        )
+        .explain(iced::Color::BLACK)
     }
 
-    fn find_icon(&self, name: &str) -> Element<'_, Message> {
-        self.icon_manager.lookup(name).unwrap_or_default().into()
+    fn find_icon(&self, name: &str, size: f32) -> Element<'_, Message> {
+        let icon = self.icon_manager.lookup(name).unwrap_or_default();
+        match icon {
+            XdgIcon::Image(handle) => image(handle).height(Length::Fixed(size)).into(),
+            XdgIcon::Svg(handle) => container(svg(handle).content_fit(ContentFit::Cover))
+                .width(Length::Fixed(size))
+                .height(Length::Fixed(size))
+                .into(),
+        }
     }
 
     // view! {
@@ -229,6 +274,7 @@ fn identify_key(key: Key) -> Option<LogoutAction> {
     }
 }
 
+#[cfg(not(debug_assertions))]
 // Executes the given logout action.
 fn execute(action: &LogoutAction) {
     let Ok(mut socket) = niri_ipc::socket::Socket::connect() else {
