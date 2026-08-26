@@ -12,7 +12,7 @@
       };
     in
     {
-      devShells.${system}.default = pkgs.mkShell {
+      devShells.${system}.default = pkgs.mkShell rec {
         name = "dwsh";
 
         nativeBuildInputs = with pkgs; [
@@ -28,12 +28,11 @@
         ];
 
         buildInputs = with pkgs; [
-          pango
-          gtk4
-          gtk4-layer-shell
-          librsvg
-          dbus
+          libxkbcommon
+          wayland
         ];
+
+        LD_LIBRARY_PATH = pkgs.lib.makeLibraryPath buildInputs;
       };
     };
 }

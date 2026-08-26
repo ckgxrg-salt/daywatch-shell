@@ -7,9 +7,8 @@ license.workspace = true
 repository.workspace = true
 
 [dependencies]
-relm4.workspace = true
-gtk4-layer-shell.workspace = true
-gtk4.workspace = true
+iced.workspace = true
+iced_exwlshell.workspace = true
 
 wayle-core.workspace = true
 wayle-media.workspace = true
