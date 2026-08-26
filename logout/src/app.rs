@@ -5,7 +5,8 @@ use iced::{
     window,
 };
 use iced_exwlshell::to_exwlshell_message;
-use std::{fmt::Display, process::Command};
+use niri_ipc::{Action, Request};
+use std::fmt::Display;
 
 use crate::app::Message::SelectAction;
 
@@ -213,32 +214,36 @@ fn identify_key(key: Key) -> Option<LogoutAction> {
 
 // Executes the given logout action.
 fn execute(action: &LogoutAction) {
-    // TODO: Use ipc properly
+    let Ok(mut socket) = niri_ipc::socket::Socket::connect() else {
+        // TODO: Log
+        return;
+    };
     match *action {
         LogoutAction::Poweroff => {
-            let _ = Command::new("niri")
-                .args(["msg", "action", "spawn", "--", "systemctl", "poweroff"])
-                .spawn();
+            let _ = socket.send(Request::Action(Action::Spawn {
+                command: vec![String::from("systemctl"), String::from("poweroff")],
+            }));
         }
         LogoutAction::Reboot => {
-            let _ = Command::new("niri")
-                .args(["msg", "action", "spawn", "--", "systemctl", "reboot"])
-                .spawn();
+            let _ = socket.send(Request::Action(Action::Spawn {
+                command: vec![String::from("systemctl"), String::from("reboot")],
+            }));
         }
         LogoutAction::Logout => {
-            let _ = Command::new("niri").args(["msg", "action", "quit"]).spawn();
+            let _ = socket.send(Request::Action(Action::Quit {
+                skip_confirmation: false,
+            }));
         }
         LogoutAction::Lock => {
-            let _ = Command::new("niri")
-                .args(["msg", "action", "spawn", "--", "hyprlock"])
-                .spawn();
+            let _ = socket.send(Request::Action(Action::Spawn {
+                command: vec![String::from("hyprlock")],
+            }));
         }
         LogoutAction::Suspend => {
-            let _ = Command::new("niri")
-                .args(["msg", "action", "spawn", "--", "systemctl", "suspend"])
-                .spawn();
+            let _ = socket.send(Request::Action(Action::Spawn {
+                command: vec![String::from("systemctl"), String::from("suspend")],
+            }));
         }
         LogoutAction::None => (),
     }
-    //relm4::main_application().quit();
 }

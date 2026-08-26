@@ -10,3 +10,4 @@ repository.workspace = true
 iced.workspace = true
 iced_exwlshell.workspace = true
 wayland-client.workspace = true
+niri-ipc.workspace = true
