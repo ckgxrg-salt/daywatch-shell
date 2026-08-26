@@ -1,6 +1,7 @@
 use iced::{
     Element, Event, Subscription, Task, event,
     keyboard::{self, Key, key::Named},
+    mouse,
     widget::{button, column, row, text},
     window,
 };
@@ -77,6 +78,9 @@ impl Logout {
                     if let Some(action) = identify_key(key) {
                         return Task::done(SelectAction(action));
                     }
+                }
+                Event::Mouse(iced::mouse::Event::ButtonReleased(mouse::Button::Left)) => {
+                    return Task::done(SelectAction(LogoutAction::None));
                 }
                 _ => (),
             },
@@ -202,6 +206,12 @@ impl Logout {
     //         }
     //     }
     // }
+}
+
+impl Default for Logout {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 fn identify_key(key: Key) -> Option<LogoutAction> {
