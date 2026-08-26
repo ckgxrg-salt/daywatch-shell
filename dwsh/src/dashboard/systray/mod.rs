@@ -2,6 +2,7 @@
 
 mod item;
 
+use gtk4::prelude::*;
 use relm4::prelude::*;
 
 use futures::StreamExt;
@@ -29,6 +30,8 @@ impl Component for Systray {
 
     view! {
         gtk::Box {
+            add_css_class: "tray",
+
             #[local_ref]
             items_widget -> gtk::Box {},
         }

@@ -37,13 +37,15 @@ impl SimpleComponent for Dashboard {
         gtk::Window {
             init_layer_shell: (),
             set_layer: Layer::Bottom,
+            set_keyboard_mode: gtk4_layer_shell::KeyboardMode::OnDemand,
             set_title: Some("dwsh-dashboard"),
 
             gtk::Grid {
                 attach[0, 0, 4, 6] = model.info_bars.widget(),
                 attach[4, 0, 6, 6] = model.calendar.widget(),
                 attach[10, 0, 4, 6] = model.switches.widget(),
-                attach[0, 6, 10, 4] = model.quote.widget(),
+                attach[0, 6, 14, 4] = model.quote.widget(),
+                attach[0, 10, 7, 6] = &gtk::Box,
                 attach[7, 10, 7, 6] = model.systray.widget(),
             }
         }

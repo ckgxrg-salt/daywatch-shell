@@ -43,8 +43,7 @@ impl FactoryComponent for SystrayItem {
     view! {
         gtk::Button {
             #[watch]
-            // TODO: Properly handle missing icons
-            set_icon_name: self.icon_name.as_deref().unwrap_or("none"),
+            set_icon_name: self.icon_name.as_deref().unwrap_or("image-missing-symbolic"),
 
             connect_clicked => SystrayItemMsg::LeftClick,
         },

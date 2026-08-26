@@ -13,7 +13,7 @@ fn tokio_rt() -> &'static Runtime {
 
 fn main() {
     let app = RelmApp::new("io.ckgxrg.dwsh");
-    relm4::set_global_css(include_str!("assets/style.css"));
+    relm4::set_global_css(include_str!("../assets/style.css"));
     tokio_rt().block_on(async {
         let _ = init_services().await;
     });

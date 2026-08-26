@@ -30,12 +30,17 @@ impl Component for Stats {
     view! {
         gtk::Box {
             set_orientation: gtk::Orientation::Vertical,
+            add_css_class: "stats",
+
+            set_width_request: 360,
 
             gtk::Box {
                 gtk::Image {
                     set_icon_name: Some("battery-symbolic"),
                 },
                 gtk::ProgressBar {
+                    add_css_class: "batterybar",
+
                     #[watch]
                     set_fraction: model.battery
                 },
@@ -46,6 +51,8 @@ impl Component for Stats {
                     set_icon_name: Some("cpu-symbolic"),
                 },
                 gtk::ProgressBar {
+                    add_css_class: "cpubar",
+
                     #[watch]
                     set_fraction: model.cpu
                 },
@@ -56,6 +63,8 @@ impl Component for Stats {
                     set_icon_name: Some("drive-virtual-symbolic"),
                 },
                 gtk::ProgressBar {
+                    add_css_class: "memorybar",
+
                     #[watch]
                     set_fraction: model.mem
                 },

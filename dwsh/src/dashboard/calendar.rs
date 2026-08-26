@@ -24,6 +24,9 @@ impl Component for Calendar {
 
     view! {
         gtk::Box {
+            add_css_class: "calendar",
+            set_size_request: (540, 360),
+
             gtk::Label {
                 #[watch]
                 set_label: &model.time.format("%H").to_string()

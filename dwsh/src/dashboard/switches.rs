@@ -27,19 +27,33 @@ impl SimpleAsyncComponent for Switches {
 
     view! {
         gtk::Grid {
+            add_css_class: "switches",
+
             attach[0, 0, 1, 1] = &gtk::Button {
+                set_size_request: (150, 150),
+
+                #[watch]
+                set_class_active: ("active", model.mpd),
                 #[watch]
                 set_tooltip_text: if model.mpd { Some("MPD is running") } else { Some("MPD is not running") },
                 set_icon_name: "playlist-symbolic",
                 connect_clicked => SwitchesMsg::Mpd,
             },
             attach[1, 0, 1, 1] = &gtk::Button {
+                set_size_request: (150, 150),
+
+                #[watch]
+                set_class_active: ("active", model.inhibit),
                 #[watch]
                 set_tooltip_text: if model.inhibit { Some("Inhibited system idle") } else { Some("This button says Zzz, pretending to sleep") },
                 set_icon_name: if model.inhibit { "caffeine-cup-full-symbolic" } else { "caffeine-cup-empty-symbolic" },
                 connect_clicked => SwitchesMsg::Inhibit,
             },
             attach[0, 1, 1, 1] = &gtk::Button {
+                set_size_request: (150, 150),
+
+                #[watch]
+                set_class_active: ("active", model.cava),
                 #[watch]
                 set_tooltip_text: if model.cava { Some("CAVA is running") } else { Some("CAVA is not running") },
                 set_icon_name: "histogram-symbolic",
