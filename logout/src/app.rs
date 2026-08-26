@@ -9,8 +9,10 @@ use niri_ipc::{Action, Request};
 use std::fmt::Display;
 
 use crate::app::Message::SelectAction;
+use crate::icon::IconManager;
 
 pub struct Logout {
+    icon_manager: IconManager,
     text: String,
     focused: LogoutAction,
 }
@@ -51,6 +53,7 @@ impl Logout {
         Self {
             text: LogoutAction::None.to_string(),
             focused: LogoutAction::None,
+            icon_manager: IconManager::new(),
         }
     }
 
@@ -85,22 +88,26 @@ impl Logout {
     pub fn view(&self, _id: window::Id) -> Element<'_, Message> {
         column![
             row![
-                button("system-shutdown-symbolic")
+                button(self.find_icon("system-shutdown-symbolic"))
                     .on_press(Message::SelectAction(LogoutAction::Poweroff)),
-                button("system-reboot-symbolic")
+                button(self.find_icon("system-reboot-symbolic"))
                     .on_press(Message::SelectAction(LogoutAction::Reboot)),
             ],
             text(&self.text),
             row![
-                button("system-suspend-symbolic")
+                button(self.find_icon("system-suspend-symbolic"))
                     .on_press(Message::SelectAction(LogoutAction::Suspend)),
-                button("system-log-out-symbolic")
+                button(self.find_icon("system-log-out-symbolic"))
                     .on_press(Message::SelectAction(LogoutAction::Logout)),
-                button("system-lock-screen-symbolic")
+                button(self.find_icon("system-lock-screen-symbolic"))
                     .on_press(Message::SelectAction(LogoutAction::Lock)),
             ],
         ]
         .into()
+    }
+
+    fn find_icon(&self, name: &str) -> Element<'_, Message> {
+        self.icon_manager.lookup(name).unwrap_or_default().into()
     }
 
     // view! {

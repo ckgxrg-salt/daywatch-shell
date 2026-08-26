@@ -29,6 +29,7 @@
 
         buildInputs = with pkgs; [
           libxkbcommon
+          vulkan-loader
           wayland
         ];
 

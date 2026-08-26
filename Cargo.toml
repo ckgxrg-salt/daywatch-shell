@@ -14,7 +14,7 @@ description = "A desktop shell for my laptop"
 repository = "https://codeberg.org/ckgxrg/dwsh"
 
 [workspace.dependencies]
-iced = { version = "0.14.0", features = ["tokio"] }
+iced = { version = "0.14.0", features = ["tokio", "image", "svg"] }
 iced_exwlshell = "0.19.1"
 wayland-client = "0.31.15"
 
@@ -30,3 +30,5 @@ niri-ipc = "26.4.0"
 tokio = { version = "1.52.3", features = ["full"] }
 futures = "0.3.33"
 anyhow = "1.0.102"
+freedesktop-icons = "0.4.0"
+linicon-theme = "1.2.0"
