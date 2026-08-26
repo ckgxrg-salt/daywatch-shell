@@ -13,7 +13,12 @@ fn tokio_rt() -> &'static Runtime {
 
 fn main() {
     let app = RelmApp::new("io.ckgxrg.dwsh");
-    relm4::set_global_css(include_str!("../assets/style.css"));
+
+    // You couln't find
+    //
+    // your CSS.
+    // Fix css being overridden by something else
+    relm4::set_global_css_with_priority(include_str!("../assets/style.css"), 1225);
     tokio_rt().block_on(async {
         let _ = init_services().await;
     });

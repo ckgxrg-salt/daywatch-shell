@@ -28,22 +28,30 @@ impl Component for Calendar {
             set_size_request: (540, 360),
 
             gtk::Label {
+                add_css_class: "hour",
+
                 #[watch]
-                set_label: &model.time.format("%H").to_string()
+                set_label: &model.time.format("%H").to_string(),
             },
             gtk::Box {
                 set_orientation: gtk::Orientation::Vertical,
 
                 gtk::Label {
+                    add_css_class: "weekday",
+
                     #[watch]
                     set_label: &model.time.format("%a").to_string()
                 },
                 gtk::Label {
+                    add_css_class: "date",
+
                     #[watch]
                     set_label: &model.time.format("%m/%d").to_string()
                 },
             },
             gtk::Label {
+                add_css_class: "minute",
+
                 #[watch]
                 set_label: &model.time.format("%M").to_string()
             }

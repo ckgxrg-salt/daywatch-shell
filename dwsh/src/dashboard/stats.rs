@@ -35,36 +35,36 @@ impl Component for Stats {
             set_width_request: 360,
 
             gtk::Box {
+                add_css_class: "battery-bar",
+
                 gtk::Image {
                     set_icon_name: Some("battery-symbolic"),
                 },
                 gtk::ProgressBar {
-                    add_css_class: "batterybar",
-
                     #[watch]
                     set_fraction: model.battery
                 },
             },
 
             gtk::Box {
+                add_css_class: "cpu-bar",
+
                 gtk::Image {
                     set_icon_name: Some("cpu-symbolic"),
                 },
                 gtk::ProgressBar {
-                    add_css_class: "cpubar",
-
                     #[watch]
                     set_fraction: model.cpu
                 },
             },
 
             gtk::Box {
+                add_css_class: "memory-bar",
+
                 gtk::Image {
                     set_icon_name: Some("drive-virtual-symbolic"),
                 },
                 gtk::ProgressBar {
-                    add_css_class: "memorybar",
-
                     #[watch]
                     set_fraction: model.mem
                 },

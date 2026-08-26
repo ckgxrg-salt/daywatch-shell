@@ -41,20 +41,20 @@ popover {
   background-color: @window_bg_color;
   border-radius: 12px;
 }
-.stats progressbar trough {
+.stats trough {
   min-width: 200px;
   min-height: 40px;
   border-radius: 12px;
   background-color: @headerbar_bg_color;
 }
-.stats progressbar progress {
+.stats progress {
   min-height: 40px;
   border-radius: 12px;
 }
-.stats .cpubar progress {
+.stats .cpu-bar progress {
   background-color: @blue_1;
 }
-.stats .memorybar progress {
+.stats .memory-bar progress {
   background-color: @yellow_1;
 }
 @keyframes slide-highlight {
@@ -69,7 +69,7 @@ popover {
       0 0;
   }
 }
-.stats .batterycharging progress {
+.stats .battery-charging progress {
   background-color: @green_3;
   background-image: linear-gradient(to left, @green_1, @green_3);
   animation: slide-highlight 3s linear infinite;
@@ -80,16 +80,30 @@ popover {
 .stats .battery progress {
   background-color: @green_3;
 }
-.stats .batterylow progress {
+.stats .battery-low progress {
   background-color: @orange_1;
 }
-.stats .batterycrit progress {
+.stats .battery-crit progress {
   background-color: @red_1;
 }
 
 .calendar {
   background-color: @window_bg_color;
   border-radius: 12px;
+}
+.calendar .hour {
+  font-size: 96px;
+  margin-right: 25px;
+}
+.calendar .weekday {
+  font-size: 32px;
+}
+.calendar .date {
+  font-size: 24px;
+}
+.calendar .minute {
+  font-size: 96px;
+  margin-left: 25px;
 }
 
 .switches {
@@ -116,25 +130,25 @@ popover {
   background-color: @window_bg_color;
   border-radius: 12px;
 }
-.media .mediaPlayer .title {
+.media .media-player .title {
   font-size: 28px;
 }
-.media .mediaPlayer .artist {
+.media .media-player .artist {
   font-size: 24px;
 }
-.media .mediaPlayer .progress {
+.media .media-player .progress {
   margin: 10px 10px 0 10px;
 }
-.media .mediaPlayer .progress trough {
+.media .media-player .progress trough {
   min-height: 40px;
   border-radius: 14px;
 }
-.media .mediaPlayer .progress highlight {
+.media .media-player .progress highlight {
   all: unset;
   border-radius: 14px;
   background-color: @accent_bg_color;
 }
-.media .mediaPlayer .progress slider {
+.media .media-player .progress slider {
   all: unset;
 }
 
