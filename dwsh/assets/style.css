@@ -1,3 +1,8 @@
+box {
+  background-color: @window_bg_color;
+  border-radius: 12px;
+}
+
 button {
   border-radius: 12px;
   background-color: @card_bg_color;
@@ -22,41 +27,6 @@ button:active image {
   -gtk-icon-transform: scale(1.5);
 }
 
-@keyframes popover-grow {
-  0% {
-    transform: scale(0.2);
-    opacity: 0;
-  }
-  100% {
-    transform: scale(1);
-    opacity: 1;
-  }
-}
-popover {
-  transform-origin: top center;
-  animation: popover-grow 1s cubic-bezier(0.25, 1, 0.5, 1) forwards;
-}
-
-.stats {
-  background-color: @window_bg_color;
-  border-radius: 12px;
-}
-.stats trough {
-  min-width: 200px;
-  min-height: 40px;
-  border-radius: 12px;
-  background-color: @headerbar_bg_color;
-}
-.stats progress {
-  min-height: 40px;
-  border-radius: 12px;
-}
-.stats .cpu-bar progress {
-  background-color: @blue_1;
-}
-.stats .memory-bar progress {
-  background-color: @yellow_1;
-}
 @keyframes slide-highlight {
   0% {
     background-position:
@@ -69,7 +39,26 @@ popover {
       0 0;
   }
 }
-.stats .battery-charging progress {
+progressbar trough {
+  min-width: 200px;
+  min-height: 40px;
+  border-radius: 12px;
+  background-color: @headerbar_bg_color;
+}
+progressbar progress {
+  min-height: 40px;
+  border-radius: 12px;
+}
+.cpu-bar progress {
+  background-color: @blue_1;
+}
+.memory-bar progress {
+  background-color: @yellow_1;
+}
+.battery-bar progress {
+  background-color: @green_3;
+}
+.battery-bar .charging progress {
   background-color: @green_3;
   background-image: linear-gradient(to left, @green_1, @green_3);
   animation: slide-highlight 3s linear infinite;
@@ -77,39 +66,13 @@ popover {
     200px 100%,
     100% 100%;
 }
-.stats .battery progress {
-  background-color: @green_3;
-}
-.stats .battery-low progress {
+.battery-bar .low progress {
   background-color: @orange_1;
 }
-.stats .battery-crit progress {
+.battery-bar .crit progress {
   background-color: @red_1;
 }
 
-.calendar {
-  background-color: @window_bg_color;
-  border-radius: 12px;
-}
-.calendar .hour {
-  font-size: 96px;
-  margin-right: 25px;
-}
-.calendar .weekday {
-  font-size: 32px;
-}
-.calendar .date {
-  font-size: 24px;
-}
-.calendar .minute {
-  font-size: 96px;
-  margin-left: 25px;
-}
-
-.switches {
-  background-color: @window_bg_color;
-  border-radius: 12px;
-}
 .switches .active {
   background-color: @accent_bg_color;
   color: @accent_fg_color;
@@ -118,18 +81,6 @@ popover {
   background-color: @popover_fg_color;
 }
 
-.quote {
-  background-color: @window_bg_color;
-  border-radius: 12px;
-}
-.quote label {
-  font-size: 24px;
-}
-
-.media {
-  background-color: @window_bg_color;
-  border-radius: 12px;
-}
 .media .media-player .title {
   font-size: 28px;
 }
@@ -150,30 +101,4 @@ popover {
 }
 .media .media-player .progress slider {
   all: unset;
-}
-
-.tray {
-  background-color: @window_bg_color;
-  border-radius: 12px;
-}
-.tray menubutton {
-  border-radius: 12px;
-  background-color: @card_bg_color;
-  color: @window_fg_color;
-  transition: background-color 100ms ease-in-out;
-}
-.tray menubutton image {
-  transition: -gtk-icon-transform 100ms ease-in-out;
-}
-.tray menubutton:hover {
-  background-color: @shade_color;
-}
-.tray menubutton:hover image {
-  -gtk-icon-transform: scale(1.2);
-}
-.tray menubutton:active {
-  background-color: @accent_bg_color;
-}
-.tray menubutton:active image {
-  -gtk-icon-transform: scale(2);
 }
