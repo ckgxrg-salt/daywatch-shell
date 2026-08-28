@@ -21,8 +21,8 @@ pub enum TrayCmd {
     UpdateItems(Vec<Arc<TrayItem>>),
 }
 
-#[relm4::component(pub)]
-impl Component for Systray {
+#[relm4::component(async, pub)]
+impl AsyncComponent for Systray {
     type Init = ();
     type Input = ();
     type Output = ();
@@ -37,12 +37,12 @@ impl Component for Systray {
         }
     }
 
-    fn init(
+    async fn init(
         _init: Self::Init,
         root: Self::Root,
-        sender: ComponentSender<Self>,
-    ) -> ComponentParts<Self> {
-        watch_tray(&sender);
+        sender: AsyncComponentSender<Self>,
+    ) -> AsyncComponentParts<Self> {
+        watch_tray(&sender).await;
 
         let items = FactoryVecDeque::builder()
             .launch(gtk::Box::default())
@@ -52,13 +52,13 @@ impl Component for Systray {
 
         let items_widget = model.items.widget();
         let widgets = view_output!();
-        ComponentParts { model, widgets }
+        AsyncComponentParts { model, widgets }
     }
 
-    fn update_cmd(
+    async fn update_cmd(
         &mut self,
         message: Self::CommandOutput,
-        _sender: ComponentSender<Self>,
+        _sender: AsyncComponentSender<Self>,
         _root: &Self::Root,
     ) {
         match message {
@@ -73,8 +73,8 @@ impl Component for Systray {
     }
 }
 
-fn watch_tray(sender: &ComponentSender<Systray>) {
-    let service = tray_service();
+async fn watch_tray(sender: &AsyncComponentSender<Systray>) {
+    let service = tray_service().await;
     let mut stream = service.items.watch();
 
     sender.command(|out, shutdown| {

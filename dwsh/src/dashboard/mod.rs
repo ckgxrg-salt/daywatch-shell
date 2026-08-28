@@ -18,10 +18,10 @@ use systray::Systray;
 
 pub struct Dashboard {
     quote: AsyncController<Quote>,
-    info_bars: Controller<Stats>,
+    info_bars: AsyncController<Stats>,
     calendar: Controller<Calendar>,
     switches: AsyncController<Switches>,
-    systray: Controller<Systray>,
+    systray: AsyncController<Systray>,
 }
 
 #[derive(Debug)]

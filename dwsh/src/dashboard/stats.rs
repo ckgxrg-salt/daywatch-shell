@@ -33,8 +33,8 @@ pub enum StatsCmd {
     UpdateCpuMem(f64, f64),
 }
 
-#[relm4::component(pub)]
-impl Component for Stats {
+#[relm4::component(async, pub)]
+impl AsyncComponent for Stats {
     type Init = ();
     type Input = ();
     type CommandOutput = StatsCmd;
@@ -90,12 +90,12 @@ impl Component for Stats {
         }
     }
 
-    fn init(
+    async fn init(
         _init: Self::Init,
         root: Self::Root,
-        sender: ComponentSender<Self>,
-    ) -> ComponentParts<Self> {
-        watch_battery(&sender);
+        sender: AsyncComponentSender<Self>,
+    ) -> AsyncComponentParts<Self> {
+        watch_battery(&sender).await;
         watch_sysinfo(&sender);
 
         let model = Stats {
@@ -106,13 +106,13 @@ impl Component for Stats {
             mem: 0.0,
         };
         let widgets = view_output!();
-        ComponentParts { model, widgets }
+        AsyncComponentParts { model, widgets }
     }
 
-    fn update_cmd(
+    async fn update_cmd(
         &mut self,
         message: Self::CommandOutput,
-        _sender: ComponentSender<Self>,
+        _sender: AsyncComponentSender<Self>,
         _root: &Self::Root,
     ) {
         match message {
@@ -129,8 +129,8 @@ impl Component for Stats {
     }
 }
 
-fn watch_battery(sender: &ComponentSender<Stats>) {
-    let service = battery_service();
+async fn watch_battery(sender: &AsyncComponentSender<Stats>) {
+    let service = battery_service().await;
     let mut stream = watch_all!(service.device, percentage, state, warning_level, icon_name);
     // let is_present = service.device.is_present.clone();
 
@@ -161,7 +161,7 @@ fn watch_battery(sender: &ComponentSender<Stats>) {
     });
 }
 
-fn watch_sysinfo(sender: &ComponentSender<Stats>) {
+fn watch_sysinfo(sender: &AsyncComponentSender<Stats>) {
     let service = sysinfo_service();
     let mut stream = watch_all!(service, cpu, memory);
 
