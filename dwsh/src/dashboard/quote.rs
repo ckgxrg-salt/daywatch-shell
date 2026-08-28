@@ -27,8 +27,6 @@ impl SimpleAsyncComponent for Quote {
 
     view! {
         gtk::Box {
-            add_css_class: "quote",
-
             gtk::Button {
                 set_width_request: 50,
 
@@ -38,6 +36,7 @@ impl SimpleAsyncComponent for Quote {
             },
             gtk::Label {
                 set_size_request: (1210, 200),
+                inline_css: "font-size: 24px;",
 
                 set_wrap: true,
 

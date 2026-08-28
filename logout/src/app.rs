@@ -10,7 +10,7 @@ pub struct Logout {
     focused: LogoutAction,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Eq, Debug)]
 pub enum LogoutAction {
     None,
     Poweroff,

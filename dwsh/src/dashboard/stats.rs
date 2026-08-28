@@ -4,19 +4,32 @@ use gtk4::prelude::*;
 use relm4::prelude::*;
 
 use futures::stream::StreamExt;
+use wayle_battery::types::{DeviceState, WarningLevel};
 use wayle_core::watch_all;
 
 use crate::services::{battery_service, sysinfo_service};
 
+#[derive(Debug, PartialEq, Eq)]
+pub enum BatteryState {
+    Charging,
+    Normal,
+    Low,
+    Critical,
+}
+
+static BATTERY_DEFAULT_ICON: &str = "battery-symbolic";
+
 pub struct Stats {
     battery: f64,
+    battery_state: BatteryState,
+    battery_icon: String,
     cpu: f64,
     mem: f64,
 }
 
 #[derive(Debug)]
 pub enum StatsCmd {
-    UpdateBattery(f64),
+    UpdateBattery(f64, BatteryState, String),
     UpdateCpuMem(f64, f64),
 }
 
@@ -30,41 +43,46 @@ impl Component for Stats {
     view! {
         gtk::Box {
             set_orientation: gtk::Orientation::Vertical,
-            add_css_class: "stats",
-
             set_width_request: 360,
 
             gtk::Box {
-                add_css_class: "battery-bar",
-
                 gtk::Image {
-                    set_icon_name: Some("battery-symbolic"),
+                    #[watch]
+                    set_icon_name: Some(&model.battery_icon),
                 },
                 gtk::ProgressBar {
+                    add_css_class: "battery-bar",
                     #[watch]
-                    set_fraction: model.battery
+                    set_class_active: ("low", model.battery_state == BatteryState::Low),
+                    #[watch]
+                    set_class_active: ("crit", model.battery_state == BatteryState::Critical),
+                    #[watch]
+                    set_class_active: ("charging", model.battery_state == BatteryState::Charging),
+
+                    #[watch]
+                    set_fraction: model.battery,
                 },
             },
 
             gtk::Box {
-                add_css_class: "cpu-bar",
-
                 gtk::Image {
                     set_icon_name: Some("cpu-symbolic"),
                 },
                 gtk::ProgressBar {
+                    add_css_class: "cpu-bar",
+
                     #[watch]
                     set_fraction: model.cpu
                 },
             },
 
             gtk::Box {
-                add_css_class: "memory-bar",
-
                 gtk::Image {
                     set_icon_name: Some("drive-virtual-symbolic"),
                 },
                 gtk::ProgressBar {
+                    add_css_class: "memory-bar",
+
                     #[watch]
                     set_fraction: model.mem
                 },
@@ -79,8 +97,11 @@ impl Component for Stats {
     ) -> ComponentParts<Self> {
         watch_battery(&sender);
         watch_sysinfo(&sender);
+
         let model = Stats {
             battery: 0.0,
+            battery_state: BatteryState::Normal,
+            battery_icon: BATTERY_DEFAULT_ICON.to_string(),
             cpu: 0.0,
             mem: 0.0,
         };
@@ -95,7 +116,11 @@ impl Component for Stats {
         _root: &Self::Root,
     ) {
         match message {
-            StatsCmd::UpdateBattery(percentage) => self.battery = percentage,
+            StatsCmd::UpdateBattery(percentage, state, icon) => {
+                self.battery = percentage;
+                self.battery_state = state;
+                self.battery_icon = icon;
+            }
             StatsCmd::UpdateCpuMem(cpu, mem) => {
                 self.cpu = cpu;
                 self.mem = mem;
@@ -106,16 +131,30 @@ impl Component for Stats {
 
 fn watch_battery(sender: &ComponentSender<Stats>) {
     let service = battery_service();
-    let percentage = service.device.percentage.clone();
-    let mut stream = percentage.watch();
-    // let state = service.device.state.clone();
+    let mut stream = watch_all!(service.device, percentage, state, warning_level, icon_name);
     // let is_present = service.device.is_present.clone();
 
     sender.command(|out, shutdown| {
         shutdown
             .register(async move {
                 while let Some(value) = stream.next().await {
-                    let _ = out.send(StatsCmd::UpdateBattery(value / 100.0));
+                    let state = if value.state.get() == DeviceState::Charging
+                        || value.state.get() == DeviceState::FullyCharged
+                    {
+                        BatteryState::Charging
+                    } else if value.warning_level.get() == WarningLevel::Low {
+                        BatteryState::Low
+                    } else if value.warning_level.get() == WarningLevel::Critical {
+                        BatteryState::Critical
+                    } else {
+                        BatteryState::Normal
+                    };
+
+                    let _ = out.send(StatsCmd::UpdateBattery(
+                        value.percentage.get() / 100.0,
+                        state,
+                        value.icon_name.get(),
+                    ));
                 }
             })
             .drop_on_shutdown()

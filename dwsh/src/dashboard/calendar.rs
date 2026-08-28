@@ -24,11 +24,11 @@ impl Component for Calendar {
 
     view! {
         gtk::Box {
-            add_css_class: "calendar",
             set_size_request: (540, 360),
 
             gtk::Label {
-                add_css_class: "hour",
+                inline_css: "font-size: 96px;",
+                set_margin_end: 25,
 
                 #[watch]
                 set_label: &model.time.format("%H").to_string(),
@@ -37,20 +37,21 @@ impl Component for Calendar {
                 set_orientation: gtk::Orientation::Vertical,
 
                 gtk::Label {
-                    add_css_class: "weekday",
+                    inline_css: "font-size: 36px;",
 
                     #[watch]
                     set_label: &model.time.format("%a").to_string()
                 },
                 gtk::Label {
-                    add_css_class: "date",
+                    inline_css: "font-size: 24px;",
 
                     #[watch]
                     set_label: &model.time.format("%m/%d").to_string()
                 },
             },
             gtk::Label {
-                add_css_class: "minute",
+                inline_css: "font-size: 96px;",
+                set_margin_start: 25,
 
                 #[watch]
                 set_label: &model.time.format("%M").to_string()
@@ -64,6 +65,7 @@ impl Component for Calendar {
         sender: ComponentSender<Self>,
     ) -> ComponentParts<Self> {
         watch_time(&sender);
+
         let model = Calendar { time: Local::now() };
         let widgets = view_output!();
         ComponentParts { model, widgets }

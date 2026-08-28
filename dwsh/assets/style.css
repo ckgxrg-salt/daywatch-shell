@@ -58,7 +58,7 @@ progressbar progress {
 .battery-bar progress {
   background-color: @green_3;
 }
-.battery-bar .charging progress {
+.battery-bar.charging progress {
   background-color: @green_3;
   background-image: linear-gradient(to left, @green_1, @green_3);
   animation: slide-highlight 3s linear infinite;
@@ -66,18 +66,18 @@ progressbar progress {
     200px 100%,
     100% 100%;
 }
-.battery-bar .low progress {
+.battery-bar.low progress {
   background-color: @orange_1;
 }
-.battery-bar .crit progress {
+.battery-bar.crit progress {
   background-color: @red_1;
 }
 
-.switches .active {
+.switches button.active {
   background-color: @accent_bg_color;
   color: @accent_fg_color;
 }
-.switches .active:hover {
+.switches button.active:hover {
   background-color: @popover_fg_color;
 }
 

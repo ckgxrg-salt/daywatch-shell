@@ -43,7 +43,7 @@ impl FactoryComponent for SystrayItem {
     view! {
         gtk::Button {
             #[watch]
-            set_icon_name: self.icon_name.as_deref().unwrap_or("image-missing-symbolic"),
+            set_icon_name: self.icon_name.as_deref().unwrap_or("missing-icon-name"),
 
             connect_clicked => SystrayItemMsg::LeftClick,
         },
@@ -120,9 +120,9 @@ impl SystrayItem {
         if let Some(button) = self.button.as_ref() {
             popover.set_parent(button);
         }
-        self.popover = Some(popover.clone());
 
         popover.popup();
+        self.popover = Some(popover);
     }
 
     fn watch_icon(&self, sender: &FactorySender<SystrayItem>) {
