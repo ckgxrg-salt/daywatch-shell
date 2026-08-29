@@ -1,14 +1,15 @@
-//! Dashboard
-
-mod calendar;
-mod quote;
-mod stats;
-mod switches;
-mod systray;
+//! Main dashboard interface
 
 use gtk4::prelude::*;
 use gtk4_layer_shell::{Layer, LayerShell};
 use relm4::prelude::*;
+
+mod calendar;
+mod media;
+mod quote;
+mod stats;
+mod switches;
+mod systray;
 
 use calendar::Calendar;
 use quote::Quote;
