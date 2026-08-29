@@ -2,6 +2,7 @@ use std::sync::{Arc, OnceLock};
 use tokio::sync::OnceCell;
 
 use wayle_battery::BatteryService;
+use wayle_media::MediaService;
 use wayle_sysinfo::SysinfoService;
 use wayle_systray::SystemTrayService;
 
@@ -24,6 +25,14 @@ static TRAY_SERVICE: OnceCell<Arc<SystemTrayService>> = OnceCell::const_new();
 pub async fn tray_service() -> Arc<SystemTrayService> {
     TRAY_SERVICE
         .get_or_init(|| async { SystemTrayService::new().await.unwrap() })
+        .await
+        .clone()
+}
+
+static MEDIA_SERVICE: OnceCell<Arc<MediaService>> = OnceCell::const_new();
+pub async fn media_service() -> Arc<MediaService> {
+    MEDIA_SERVICE
+        .get_or_init(|| async { MediaService::new().await.unwrap() })
         .await
         .clone()
 }
