@@ -47,7 +47,6 @@ pub enum MediaMsg {
 #[derive(Debug)]
 pub enum MediaCmd {
     PlayerList(Vec<Arc<Player>>),
-    ActivePlayer(Option<Arc<Player>>),
 
     TrackInfo(Option<String>, String, String, Option<Duration>),
     Playback(PlaybackState),
@@ -98,7 +97,7 @@ impl AsyncComponent for Media {
 
             gtk::Separator,
 
-            if model.players.len() > 0 {
+            if model.active_player.is_some() {
                 gtk::Grid {
                     set_margin_top: 20,
                     set_margin_start: 10,
@@ -218,6 +217,7 @@ impl AsyncComponent for Media {
             status: PlaybackState::Stopped,
             position: Duration::default(),
             length: None,
+
             can_go_previous: false,
             can_control: false,
             can_go_next: false,
@@ -229,11 +229,46 @@ impl AsyncComponent for Media {
     async fn update(
         &mut self,
         message: Self::Input,
-        _sender: AsyncComponentSender<Self>,
+        sender: AsyncComponentSender<Self>,
         _root: &Self::Root,
     ) {
-        match message {
-            _ => todo!(),
+        if let Some(player) = &self.active_player {
+            match message {
+                MediaMsg::NextPlayer => {
+                    if let Some(current_index) = self.players.iter().position(|p| *p == *player) {
+                        let next_index = if current_index == self.players.len() - 1 {
+                            0
+                        } else {
+                            current_index + 1
+                        };
+                        let next = self.players.get(next_index).cloned();
+                        self.set_active_player(next, &sender);
+                    }
+                }
+                MediaMsg::PrevPlayer => {
+                    if let Some(current_index) = self.players.iter().position(|p| *p == *player) {
+                        let next_index = if current_index == 0 {
+                            self.players.len() - 1
+                        } else {
+                            current_index - 1
+                        };
+                        let next = self.players.get(next_index).cloned();
+                        self.set_active_player(next, &sender);
+                    }
+                }
+                MediaMsg::PlayPause => {
+                    let _ = player.play_pause().await;
+                }
+                MediaMsg::Prev => {
+                    let _ = player.previous().await;
+                }
+                MediaMsg::Next => {
+                    let _ = player.next().await;
+                }
+                MediaMsg::Position(pos) => {
+                    let _ = player.set_position(pos).await;
+                }
+            }
         }
     }
 }
@@ -252,19 +287,22 @@ impl Media {
                 })
                 .drop_on_shutdown()
         });
-
-        let mut active_player = service.active_player.watch();
-        sender.command(|out, shutdown| {
-            shutdown
-                .register(async move {
-                    while let Some(player) = active_player.next().await {
-                        let _ = out.send(MediaCmd::ActivePlayer(player));
-                    }
-                })
-                .drop_on_shutdown()
-        });
     }
 
+    fn set_active_player(
+        &mut self,
+        player: Option<Arc<Player>>,
+        sender: &AsyncComponentSender<Media>,
+    ) {
+        if let Some(token) = &self.cancellation_token {
+            token.cancel();
+        }
+        self.active_player = player;
+        self.run_active_player_service(sender);
+    }
+
+    /// Monitors changes of active player async.
+    /// Does nothing if `self.active_player` is [`None`].
     fn run_active_player_service(&mut self, sender: &AsyncComponentSender<Media>) {
         if let Some(player) = &self.active_player {
             let token = CancellationToken::new();
