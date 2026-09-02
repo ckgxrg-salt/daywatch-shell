@@ -138,7 +138,7 @@ impl AsyncComponent for Media {
 
                         connect_change_value[sender] => move |_, _, value| {
                             sender.input(MediaMsg::Position(Duration::from_secs_f64(value)));
-                            Propagation::Proceed
+                            Propagation::Stop
                         }
                     },
 
@@ -268,8 +268,12 @@ impl AsyncComponent for Media {
                     let _ = player.next().await;
                 }
                 MediaMsg::Position(pos) => {
-                    // `wayle-media` seems broken here, look for replacements
-                    let _ = player.set_position(pos).await;
+                    // [`player.set_position`] seems broken here, use seek for now.
+                    // TODO: properly handle overflow
+                    let new: i64 = pos.as_micros().try_into().unwrap();
+                    let old: i64 = self.position.as_micros().try_into().unwrap();
+                    let _ = player.seek(new - old).await;
+                    self.position = pos;
                 }
             }
         }
@@ -297,6 +301,7 @@ impl AsyncComponent for Media {
                 self.title = title;
                 self.artist = artist;
                 self.length = length;
+                self.position = Duration::default();
             }
             MediaCmd::Playback(state) => {
                 self.state = state;
