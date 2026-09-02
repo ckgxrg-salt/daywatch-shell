@@ -3,20 +3,31 @@
 use gtk4::{glib::Propagation, prelude::*};
 use relm4::prelude::*;
 
-use std::time::Duration;
+use futures::StreamExt;
+use std::{sync::Arc, time::Duration};
+use tokio_util::sync::CancellationToken;
+use wayle_core::watch_all;
 use wayle_media::{core::player::Player, types::PlaybackState};
+
+use crate::services::media_service;
 
 static PAUSE_ICON_NAME: &str = "media-playback-pause-symbolic";
 static PLAY_ICON_NAME: &str = "media-playback-start-symbolic";
 
 pub struct Media {
-    players: Vec<Player>,
+    players: Vec<Arc<Player>>,
+    active_player: Option<Arc<Player>>,
+    cancellation_token: Option<CancellationToken>,
+
+    // Dynamic
     cover_art: Option<String>,
-    title: Option<String>,
-    artist: Option<String>,
+    title: String,
+    artist: String,
     status: PlaybackState,
     position: Duration,
-    duration: Option<Duration>,
+    length: Option<Duration>,
+
+    // Constant
     can_go_previous: bool,
     can_control: bool,
     can_go_next: bool,
@@ -24,18 +35,23 @@ pub struct Media {
 
 #[derive(Debug)]
 pub enum MediaMsg {
+    NextPlayer,
+    PrevPlayer,
+
     PlayPause,
     Next,
     Prev,
     Position(Duration),
-    NextPlayer,
-    PrevPlayer,
 }
 
 #[derive(Debug)]
 pub enum MediaCmd {
-    UpdatePlayerList(Vec<Player>),
-    UpdateActivePlayer(Box<Option<Player>>),
+    PlayerList(Vec<Arc<Player>>),
+    ActivePlayer(Option<Arc<Player>>),
+
+    TrackInfo(Option<String>, String, String, Option<Duration>),
+    Playback(PlaybackState),
+    Position(Duration),
 }
 
 #[relm4::component(async, pub)]
@@ -100,17 +116,17 @@ impl AsyncComponent for Media {
                         set_max_width_chars: 20,
                         set_ellipsize: gtk::pango::EllipsizeMode::End,
                         #[watch]
-                        set_label: model.title.as_deref().unwrap_or_default(),
+                        set_label: &model.title,
                         #[watch]
-                        set_tooltip_text: model.title.as_deref(),
+                        set_tooltip_text: Some(&model.title),
                     },
                     attach[1, 1, 1, 1] = &gtk::Label {
                         set_max_width_chars: 20,
                         set_ellipsize: gtk::pango::EllipsizeMode::End,
                         #[watch]
-                        set_label: model.artist.as_deref().unwrap_or_default(),
+                        set_label: &model.artist,
                         #[watch]
-                        set_tooltip_text: model.artist.as_deref(),
+                        set_tooltip_text: Some(&model.artist),
                     },
 
                     attach[0, 2, 2, 1] = &gtk::Scale {
@@ -119,7 +135,7 @@ impl AsyncComponent for Media {
                         #[watch]
                         set_value: model.position.as_secs_f64(),
                         #[watch]
-                        set_range: (0.0, model.duration.unwrap_or_default().as_secs_f64()),
+                        set_range: (0.0, model.length.unwrap_or_default().as_secs_f64()),
 
                         connect_change_value[sender] => move |_, _, value| {
                             sender.input(MediaMsg::Position(Duration::from_secs_f64(value)));
@@ -131,7 +147,7 @@ impl AsyncComponent for Media {
                         #[wrap(Some)]
                         set_start_widget = &gtk::Label {
                             #[watch]
-                            set_visible: model.duration.is_some(),
+                            set_visible: model.length.is_some(),
                             #[watch]
                             set_label: &length_str(model.position),
                         },
@@ -171,9 +187,9 @@ impl AsyncComponent for Media {
                         #[wrap(Some)]
                         set_end_widget = &gtk::Label {
                             #[watch]
-                            set_visible: model.duration.is_some(),
+                            set_visible: model.length.is_some(),
                             #[watch]
-                            set_label: &length_str(model.duration.unwrap_or_default()),
+                            set_label: &length_str(model.length.unwrap_or_default()),
                         },
                     },
                 }
@@ -193,12 +209,15 @@ impl AsyncComponent for Media {
     ) -> AsyncComponentParts<Self> {
         let model = Self {
             players: Vec::new(),
+            active_player: None,
+            cancellation_token: None,
+
             cover_art: None,
-            artist: None,
-            title: None,
+            artist: String::default(),
+            title: String::default(),
             status: PlaybackState::Stopped,
             position: Duration::default(),
-            duration: None,
+            length: None,
             can_go_previous: false,
             can_control: false,
             can_go_next: false,
@@ -215,6 +234,84 @@ impl AsyncComponent for Media {
     ) {
         match message {
             _ => todo!(),
+        }
+    }
+}
+
+impl Media {
+    async fn run_service(sender: &AsyncComponentSender<Media>) {
+        let service = media_service().await;
+
+        let mut player_list = service.player_list.watch();
+        sender.command(|out, shutdown| {
+            shutdown
+                .register(async move {
+                    while let Some(list) = player_list.next().await {
+                        let _ = out.send(MediaCmd::PlayerList(list));
+                    }
+                })
+                .drop_on_shutdown()
+        });
+
+        let mut active_player = service.active_player.watch();
+        sender.command(|out, shutdown| {
+            shutdown
+                .register(async move {
+                    while let Some(player) = active_player.next().await {
+                        let _ = out.send(MediaCmd::ActivePlayer(player));
+                    }
+                })
+                .drop_on_shutdown()
+        });
+    }
+
+    fn run_active_player_service(&mut self, sender: &AsyncComponentSender<Media>) {
+        if let Some(player) = &self.active_player {
+            let token = CancellationToken::new();
+
+            let _token = token.clone();
+            let mut track_info = watch_all!(player.metadata, cover_art, title, artist, length);
+            sender.command(|out, shutdown| async move {
+                tokio::select! {
+                    _ = _token.cancelled() => (),
+                    _ = shutdown.register(async move {
+                            while let Some(value) = track_info.next().await {
+                                let _ = out.send(MediaCmd::TrackInfo(value.cover_art.get(), value.title.get(), value.artist.get(), value.length.get()));
+                            }
+                        })
+                        .drop_on_shutdown() => (),
+                }
+            });
+
+            let _token = token.clone();
+            let mut playback = player.playback_state.watch();
+            sender.command(|out, shutdown| async move {
+                tokio::select! {
+                    _ = _token.cancelled() => (),
+                    _ = shutdown.register(async move {
+                            while let Some(value) = playback.next().await {
+                                let _ = out.send(MediaCmd::Playback(value));
+                            }
+                        })
+                        .drop_on_shutdown() => (),
+                }
+            });
+
+            let _token = token.clone();
+            let mut position = player.position.watch();
+            sender.command(|out, shutdown| async move {
+                tokio::select! {
+                    _ = _token.cancelled() => (),
+                    _ = shutdown.register(async move {
+                            while let Some(value) = position.next().await {
+                                let _ = out.send(MediaCmd::Position(value));
+                            }
+                        })
+                        .drop_on_shutdown() => (),
+                }
+            });
+
+            self.cancellation_token = Some(token);
         }
     }
 }

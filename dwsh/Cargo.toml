@@ -20,4 +20,5 @@ chrono.workspace = true
 
 anyhow.workspace = true
 tokio.workspace = true
+tokio-util.workspace = true
 futures.workspace = true

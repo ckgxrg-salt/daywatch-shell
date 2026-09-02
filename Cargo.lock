@@ -308,6 +308,7 @@ dependencies = [
  "gtk4-layer-shell",
  "relm4",
  "tokio",
+ "tokio-util",
  "wayle-battery",
  "wayle-core",
  "wayle-media",
