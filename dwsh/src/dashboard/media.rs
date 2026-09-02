@@ -23,7 +23,7 @@ pub struct Media {
     cover_art: Option<String>,
     title: String,
     artist: String,
-    status: PlaybackState,
+    state: PlaybackState,
     position: Duration,
     length: Option<Duration>,
 
@@ -166,7 +166,7 @@ impl AsyncComponent for Media {
                                 set_height_request: 30,
 
                                 #[watch]
-                                set_icon_name: playback_icon_name(model.status),
+                                set_icon_name: playback_icon_name(model.state),
                                 #[watch]
                                 set_visible: model.can_control,
 
@@ -206,6 +206,8 @@ impl AsyncComponent for Media {
         _root: Self::Root,
         sender: AsyncComponentSender<Self>,
     ) -> AsyncComponentParts<Self> {
+        Self::run_service(&sender).await;
+
         let model = Self {
             players: Vec::new(),
             active_player: None,
@@ -214,7 +216,7 @@ impl AsyncComponent for Media {
             cover_art: None,
             artist: String::default(),
             title: String::default(),
-            status: PlaybackState::Stopped,
+            state: PlaybackState::Stopped,
             position: Duration::default(),
             length: None,
 
@@ -266,8 +268,41 @@ impl AsyncComponent for Media {
                     let _ = player.next().await;
                 }
                 MediaMsg::Position(pos) => {
+                    // `wayle-media` seems broken here, look for replacements
                     let _ = player.set_position(pos).await;
                 }
+            }
+        }
+    }
+
+    async fn update_cmd(
+        &mut self,
+        message: Self::CommandOutput,
+        sender: AsyncComponentSender<Self>,
+        _root: &Self::Root,
+    ) {
+        match message {
+            MediaCmd::PlayerList(list) => {
+                if list.is_empty() {
+                    self.set_active_player(None, &sender);
+                } else {
+                    if self.players.is_empty() {
+                        self.set_active_player(list.first().cloned(), &sender);
+                    }
+                }
+                self.players = list;
+            }
+            MediaCmd::TrackInfo(cover_art, title, artist, length) => {
+                self.cover_art = cover_art;
+                self.title = title;
+                self.artist = artist;
+                self.length = length;
+            }
+            MediaCmd::Playback(state) => {
+                self.state = state;
+            }
+            MediaCmd::Position(position) => {
+                self.position = position;
             }
         }
     }
@@ -297,6 +332,11 @@ impl Media {
         if let Some(token) = &self.cancellation_token {
             token.cancel();
         }
+        if let Some(player) = &player {
+            self.can_go_previous = player.can_go_previous.get();
+            self.can_control = player.can_control.get();
+            self.can_go_next = player.can_go_next.get();
+        }
         self.active_player = player;
         self.run_active_player_service(sender);
     }
@@ -314,7 +354,14 @@ impl Media {
                     _ = _token.cancelled() => (),
                     _ = shutdown.register(async move {
                             while let Some(value) = track_info.next().await {
-                                let _ = out.send(MediaCmd::TrackInfo(value.cover_art.get(), value.title.get(), value.artist.get(), value.length.get()));
+                                let mut cover_art = value.cover_art.get();
+                                // Fallback, try to use `art_url` to work out a cover art.
+                                if cover_art.is_none() {
+                                    let art_url = value.art_url.get();
+                                    cover_art = art_url.map(|url| url.strip_prefix("file://").unwrap_or_default().to_string());
+                                }
+
+                                let _ = out.send(MediaCmd::TrackInfo(cover_art, value.title.get(), value.artist.get(), value.length.get()));
                             }
                         })
                         .drop_on_shutdown() => (),
@@ -356,7 +403,7 @@ impl Media {
 
 fn length_str(duration: Duration) -> String {
     format!(
-        "{:02}:{:02}",
+        "{:02.0}:{:02.0}",
         duration.as_secs_f32() / 60.0,
         duration.as_secs_f32() % 60.0
     )

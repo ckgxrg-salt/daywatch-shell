@@ -32,7 +32,7 @@ pub async fn tray_service() -> Arc<SystemTrayService> {
 static MEDIA_SERVICE: OnceCell<Arc<MediaService>> = OnceCell::const_new();
 pub async fn media_service() -> Arc<MediaService> {
     MEDIA_SERVICE
-        .get_or_init(|| async { MediaService::new().await.unwrap() })
+        .get_or_init(|| async { MediaService::builder().with_daemon().build().await.unwrap() })
         .await
         .clone()
 }
